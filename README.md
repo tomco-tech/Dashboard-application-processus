@@ -1,17 +1,19 @@
+# Dashboard Applications — Processus v1.1
 
-# Dashboard Applications — Processus
+Widget Grist pour suivre le positionnement des applications dans un processus, à partir de la table `B_Applications`.
 
-Widget Grist affichant le processus global de traitement des applications à partir de la table `B_Applications`.
+## Correctifs v1.1
 
-## Fonctionnalités
-
-- Affichage du schéma de processus avec compteurs par étape.
-- Zoom sur le schéma.
-- Clic sur une étape pour voir le détail des applications concernées.
-- Détail des applications et des demandes sous-jacentes (`service utilisateur + application`).
-- Utilisation d'une seule table source : `B_Applications`.
+- Diagramme entièrement redessiné dans un SVG unique : les textes, connecteurs et losanges partagent le même repère.
+- Connecteurs arrêtés aux limites des étapes et raccordés aux losanges.
+- Résolution des colonnes Grist de type `Ref`, `RefList`, `Choice`, `ChoiceList` ou texte.
+- La colonne `Statut` peut donc être une référence vers `REF_Backend`.
+- Utilisation prioritaire de la table source associée au widget.
+- Actualisation automatique après modification de `B_Applications`, plus bouton manuel `Rafraîchir`.
+- KPI présents dès l’ouverture et recalculés après le chargement des données.
 
 ## Installation
 
-Publier `index.html` via GitHub Pages puis utiliser l’URL dans un widget personnalisé Grist.
-Le widget nécessite `Full document access`.
+Publier `index.html` sur GitHub Pages, puis ajouter l’URL comme custom widget Grist.
+
+Le widget doit être associé à `B_Applications` et disposer de `Full document access`.
