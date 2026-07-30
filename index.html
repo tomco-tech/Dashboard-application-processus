@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Processus Applications</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    :root{
+      --bg:#f4f6fa;
+      --panel:#ffffff;
+      --panel-soft:#f8fafc;
+      --ink:#162033;
+      --muted:#6b778c;
+      --line:#dbe3ef;
+      --line-strong:#c6d0df;
+      --blue:#3157ff;
+      --blue-soft:#ebf1ff;
+      --green:#14855d;
+      --green-soft:#e8f7f0;
+      --orange:#b96a14;
+      --orange-soft:#fff3e4;
+      --red:#c23b34;
+      --red-soft:#fdeceb;
+      --shadow:0 10px 28px rgba(23,33,52,.08);
+      --radius:18px;
+      --radius-sm:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size:14px;
+    }
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .app{padding:16px; min-height:100vh}
+    .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px}
+    .title-wrap{min-width:0}
+    h1{margin:0; font-size:28px; line-height:1.05; letter-spacing:-.03em}
+    .subtitle{margin-top:6px; color:var(--muted); font-size:13px}
+    .top-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .btn{border:1px solid var(--line); background:#fff; color:#334155; border-radius:12px; min-height:36px; padding:8px 12px; font-weight:700; transition:.16s ease}
+    .btn:hover{background:#f9fbfd; border-color:#b9c5d6}
+    .btn-primary{background:var(--blue); color:#fff; border-color:transparent; box-shadow:0 8px 18px rgba(49,87,255,.2)}
+    .btn-primary:hover{background:#2548e0}
+    .stats{display:grid; grid-template-columns:repeat(5,minmax(120px,1fr)); gap:10px; margin-bottom:12px}
+    .kpi{background:#eef2f8; border:1px solid #e1e7f0; border-radius:14px; padding:10px 12px; min-height:72px}
+    .kpi-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:800}
+    .kpi-value{margin-top:8px; font-size:26px; line-height:1; font-weight:800; letter-spacing:-.03em}
+    .kpi-sub{margin-top:6px; color:var(--muted); font-size:12px}
+    .layout{display:grid; grid-template-columns:minmax(340px,1.35fr) minmax(280px,.9fr); gap:12px; align-items:start}
+    .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px 10px; border-bottom:1px solid var(--line)}
+    .panel-title{display:flex; flex-direction:column; gap:4px}
+    .panel-kicker{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+    .panel-name{font-size:22px; line-height:1.1; font-weight:800; letter-spacing:-.03em}
+    .panel-desc{color:var(--muted); font-size:12px}
+    .diagram-panel{overflow:hidden}
+    .diagram-toolbar{display:flex; gap:8px; align-items:center}
+    .zoom-chip{padding:7px 10px; border-radius:999px; background:#eef2f8; border:1px solid #dde5f0; font-weight:700; color:#46546a; font-size:12px}
+    .diagram-wrap{padding:10px 12px 14px; overflow:auto; max-height:760px}
+    .stage-outer{position:relative; overflow:auto; border-radius:16px; background:linear-gradient(180deg,#fbfcfe,#f6f8fc); border:1px dashed #d8e0ec; min-height:730px}
+    .stage{position:relative; width:1080px; height:790px; transform-origin:top left}
+    .stage svg{position:absolute; inset:0; width:1080px; height:790px; pointer-events:none}
+    .flow-node{
+      position:absolute; width:180px; min-height:72px; border:0; background:transparent; text-align:left; padding:10px 12px; border-radius:16px;
+      transition:.16s ease; color:var(--ink);
+    }
+    .flow-node:hover{background:rgba(49,87,255,.05)}
+    .flow-node.active{background:#eef3ff; box-shadow:inset 0 0 0 1px rgba(49,87,255,.24)}
+    .flow-node.empty{opacity:.55}
+    .node-label{display:block; font-weight:700; line-height:1.25; font-size:14px}
+    .node-meta{display:flex; gap:10px; align-items:baseline; margin-top:8px}
+    .node-count{font-size:24px; line-height:1; font-weight:800; letter-spacing:-.03em}
+    .node-sub{font-size:11px; color:var(--muted); font-weight:700}
+    .connector{stroke:#ccd6e4; stroke-width:2.2; fill:none; stroke-linecap:round; stroke-linejoin:round}
+    .connector-strong{stroke:#a9b7c8; stroke-dasharray:4 5}
+    .decision{
+      position:absolute; width:24px; height:24px; transform:rotate(45deg); border:1px solid #cad3e3; background:#fff; border-radius:3px; box-shadow:0 4px 10px rgba(26,34,48,.08)
+    }
+    .decision-label{position:absolute; font-size:11px; font-weight:700; color:var(--muted)}
+    .unknown-strip{display:flex; align-items:center; gap:10px; padding:10px 14px 14px; border-top:1px solid var(--line); flex-wrap:wrap}
+    .unknown-pill{display:inline-flex; align-items:center; gap:10px; padding:8px 12px; border-radius:999px; background:#f3f5f9; border:1px solid #e0e6ef}
+    .unknown-pill strong{font-size:16px}
+    .details-panel{display:flex; flex-direction:column; min-height:0}
+    .details-top{padding:14px 16px 10px; border-bottom:1px solid var(--line)}
+    .step-badge{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#edf2ff; color:#2744cb; font-weight:800; font-size:12px}
+    .step-badge.off{background:#f3f5f9; color:#445063}
+    .details-metrics{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:10px}
+    .mini-kpi{padding:10px 12px; background:#f7f9fc; border:1px solid #e3e9f1; border-radius:14px}
+    .mini-kpi .label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-weight:800}
+    .mini-kpi .value{margin-top:4px; font-size:22px; line-height:1; font-weight:800}
+    .details-list{padding:10px 12px 14px; overflow:auto; max-height:760px}
+    .empty-state{padding:26px 18px; text-align:center; color:var(--muted); border:1px dashed #dbe3ef; border-radius:16px; background:#fafbfd}
+    .app-item{padding:14px; border:1px solid var(--line); border-radius:16px; background:#fff; margin-bottom:10px}
+    .app-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+    .app-title{font-size:16px; line-height:1.2; font-weight:800; letter-spacing:-.02em}
+    .app-sub{margin-top:4px; font-size:12px; color:var(--muted); font-weight:600}
+    .priority-pill{display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800; white-space:nowrap}
+    .prio-p0,.prio-p1{background:#fdeaea; color:#b42318}
+    .prio-p2{background:#fff4e8; color:#b85a00}
+    .prio-p3{background:#eef3ff; color:#2952d7}
+    .prio-p4,.prio-default{background:#eff2f6; color:#566273}
+    .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+    .chip{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:#f4f7fb; border:1px solid #e2e8f1; color:#465366; font-size:12px; font-weight:700}
+    .chip.good{background:#ecf8f2; border-color:#cae9da; color:#126e4d}
+    .chip.warn{background:#fff4e5; border-color:#f7dfbe; color:#9b5b03}
+    .services{margin-top:12px; display:flex; flex-wrap:wrap; gap:8px}
+    .service-tag{padding:6px 10px; border-radius:999px; background:#eef2f8; color:#38475e; font-size:12px; font-weight:700}
+    .rows{margin-top:12px; display:grid; gap:8px}
+    .row{padding:10px 12px; border-radius:14px; background:#f8fafc; border:1px solid #e5ebf3}
+    .row-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+    .row-service{font-weight:800; font-size:13px}
+    .row-meta{margin-top:6px; display:flex; flex-wrap:wrap; gap:8px}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .inline-legend{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .legend-item{display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:12px; font-weight:600}
+    .legend-dot{width:10px; height:10px; border-radius:50%}
+    .note{padding:12px 16px 16px; color:var(--muted); font-size:12px}
+    .hidden{display:none !important}
+    @media (max-width: 1220px){
+      .layout{grid-template-columns:1fr}
+      .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .diagram-wrap,.details-list{max-height:none}
+      .stage-outer{min-height:auto}
+    }
+    @media (max-width: 720px){
+      .stats{grid-template-columns:1fr}
+      .topbar{flex-direction:column}
+      .panel-name{font-size:20px}
+      h1{font-size:24px}
+      .details-metrics{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="title-wrap">
+      <h1>Dashboard Applications — Processus</h1>
+      <div class="subtitle">Vue de suivi du processus de traitement des applications à partir de la table <strong>B_Applications</strong>.</div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="resetSelectionBtn">Tout voir</button>
+      <button class="btn" id="zoomOutBtn">−</button>
+      <div class="zoom-chip" id="zoomChip">100%</div>
+      <button class="btn" id="zoomInBtn">+</button>
+      <button class="btn" id="refreshBtn">Rafraîchir</button>
+    </div>
+  </div>
+
+  <div class="stats" id="statsBar"></div>
+
+  <div class="layout">
+    <section class="card diagram-panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <div class="panel-kicker">Processus global</div>
+          <div class="panel-name">Traitement des applications</div>
+          <div class="panel-desc">Cliquez sur une étape pour filtrer les applications. Utilisez le zoom si nécessaire.</div>
+        </div>
+        <div class="inline-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:#3157ff"></span>Étape sélectionnée</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#dbe3ef"></span>Sans activité</span>
+        </div>
+      </div>
+      <div class="diagram-wrap">
+        <div class="stage-outer" id="stageOuter">
+          <div class="stage" id="diagramStage">
+            <svg viewBox="0 0 1080 790" aria-hidden="true">
+              <path class="connector" d="M118 405 H 220" />
+              <path class="connector" d="M310 405 H 392" />
+              <path class="connector" d="M482 190 V 235" />
+              <path class="connector" d="M482 307 V 338" />
+              <path class="connector" d="M572 275 H 750" />
+              <path class="connector" d="M482 430 V 492" />
+              <path class="connector" d="M482 579 V 650" />
+              <path class="connector" d="M572 675 H 740" />
+              <path class="connector" d="M392 675 H 208" />
+              <path class="connector" d="M840 675 H 920" />
+              <path class="connector" d="M1000 675 V 740" />
+              <path class="connector-strong" d="M840 275 V 620" />
+            </svg>
+
+            <button class="flow-node" data-node="jira" style="left:20px; top:360px; width:180px;">
+              <span class="node-label">Traitement demande JIRA</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <button class="flow-node" data-node="apk" style="left:392px; top:110px; width:180px;">
+              <span class="node-label">Récupérer l'APK</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <button class="flow-node" data-node="ssi" style="left:392px; top:235px; width:180px;">
+              <span class="node-label">Qualification SSI</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <button class="flow-node" data-node="conformite" style="left:750px; top:235px; width:240px;">
+              <span class="node-label">Demande de mise en conformité auprès de l'éditeur</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <button class="flow-node" data-node="pfai" style="left:220px; top:360px; width:180px;">
+              <span class="node-label">Traitement demande PFAI</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <div class="decision" style="left:470px; top:455px"></div>
+
+            <button class="flow-node" data-node="specifique" style="left:392px; top:500px; width:190px;">
+              <span class="node-label">Traitement spécifique supplémentaire</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <button class="flow-node" data-node="fonctionnelle" style="left:392px; top:615px; width:190px;">
+              <span class="node-label">Qualification fonctionnelle</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <div class="decision" style="left:470px; top:690px"></div>
+            <div class="decision-label" style="left:402px; top:700px">OK</div>
+            <div class="decision-label" style="left:560px; top:700px">KO</div>
+            <div class="decision" style="left:775px; top:690px"></div>
+
+            <button class="flow-node" data-node="deploiement" style="left:70px; top:735px; width:205px;">
+              <span class="node-label">Déploiement et tests CU</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <button class="flow-node" data-node="n3" style="left:870px; top:660px; width:180px;">
+              <span class="node-label">Support N3 ACMOSS</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+
+            <button class="flow-node" data-node="editeur" style="left:870px; top:745px; width:180px;">
+              <span class="node-label">Support Éditeur</span>
+              <span class="node-meta"><span class="node-count">0</span><span class="node-sub">applis • 0 demandes</span></span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="unknown-strip">
+        <div class="unknown-pill" id="unknownStatusPill"><span>Autres / statut non reconnu</span><strong>0</strong></div>
+        <div class="unknown-pill" id="emptyStatusPill"><span>Sans statut renseigné</span><strong>0</strong></div>
+      </div>
+      <div class="note">Les compteurs affichent le nombre d’applications distinctes dans l’étape. Le détail présente également le nombre de demandes sous-jacentes (une demande = une ligne de B_Applications).</div>
+    </section>
+
+    <section class="card details-panel">
+      <div class="details-top">
+        <div class="panel-kicker">Détail</div>
+        <div class="panel-name" id="detailsTitle">Toutes les applications</div>
+        <div class="panel-desc" id="detailsDesc">Sélectionnez une étape du processus pour voir les applications concernées.</div>
+        <div style="margin-top:10px"><span class="step-badge off" id="selectionBadge">Toutes les étapes</span></div>
+        <div class="details-metrics" id="detailsMetrics"></div>
+      </div>
+      <div class="details-list" id="detailsList"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const CANDIDATE_TABLES = ["B_Applications", "B Applications", "Référentiel-B_Applications-2", "B_Applications-2"];
+  const STATUS_NODES = [
+    { key: 'jira', label: 'Traitement demande JIRA', aliases: ['traitement demande jira', 'jira'] },
+    { key: 'apk', label: "Récupérer l'APK", aliases: ["recuperer l apk", 'récupérer l apk', 'recuperer apk', 'récupérer apk', 'apk'] },
+    { key: 'ssi', label: 'Qualification SSI', aliases: ['qualification ssi', 'ssi'] },
+    { key: 'conformite', label: "Demande de mise en conformité auprès de l'éditeur", aliases: ['demande de mise en conformite aupres de l editeur', 'mise en conformite', 'conformite editeur', 'demande conformite editeur'] },
+    { key: 'pfai', label: 'Traitement demande PFAI', aliases: ['traitement demande pfai', 'pfai'] },
+    { key: 'specifique', label: 'Traitement spécifique supplémentaire', aliases: ['traitement specifique supplementaire', 'traitement spécifique supplémentaire', 'specifique supplementaire', 'spécifique supplémentaire'] },
+    { key: 'fonctionnelle', label: 'Qualification fonctionnelle', aliases: ['qualification fonctionnelle', 'fonctionnelle'] },
+    { key: 'deploiement', label: 'Déploiement et tests CU', aliases: ['deploiement et tests cu', 'déploiement et tests cu', 'deploiement cu', 'tests cu'] },
+    { key: 'n3', label: 'Support N3 ACMOSS', aliases: ['support n3 acmoss', 'n3 acmoss', 'support acmoss'] },
+    { key: 'editeur', label: 'Support Éditeur', aliases: ['support editeur', 'support éditeur', 'editeur'] },
+  ];
+  const COLUMN_ALIASES = {
+    service: ['service utilisateur', 'service', 'service demandeur'],
+    app: ["nom de l'application", 'application', 'nom application'],
+    editor: ['editeur', 'éditeur'],
+    status: ['statut'],
+    priority: ['priorité dud', 'priorite dud', 'priorité', 'priorite'],
+    playstore: ['playstore'],
+    comment: ['commmentaire', 'commentaire'],
+    step: ['etape', 'étape']
+  };
+
+  const state = {
+    tableId: '',
+    rows: [],
+    columns: {},
+    selectedNode: null,
+    zoom: 1,
+    lastRefresh: null
+  };
+
+  const dom = {
+    statsBar: document.getElementById('statsBar'),
+    detailsTitle: document.getElementById('detailsTitle'),
+    detailsDesc: document.getElementById('detailsDesc'),
+    detailsMetrics: document.getElementById('detailsMetrics'),
+    detailsList: document.getElementById('detailsList'),
+    selectionBadge: document.getElementById('selectionBadge'),
+    diagramStage: document.getElementById('diagramStage'),
+    stageOuter: document.getElementById('stageOuter'),
+    zoomChip: document.getElementById('zoomChip'),
+    refreshBtn: document.getElementById('refreshBtn'),
+    zoomInBtn: document.getElementById('zoomInBtn'),
+    zoomOutBtn: document.getElementById('zoomOutBtn'),
+    resetSelectionBtn: document.getElementById('resetSelectionBtn'),
+    unknownStatusPill: document.getElementById('unknownStatusPill'),
+    emptyStatusPill: document.getElementById('emptyStatusPill')
+  };
+
+  function normalizeText(value) {
+    return String(value == null ? '' : value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[’']/g, ' ')
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+  const asText = (v) => (v == null ? '' : String(v)).trim();
+  const unique = (arr) => Array.from(new Set(arr.filter(Boolean)));
+  function tableRows(data) {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.id)) {
+      return data.id.map((id, idx) => {
+        const row = { id };
+        Object.keys(data).forEach((key) => { row[key] = data[key][idx]; });
+        return row;
+      });
+    }
+    return [];
+  }
+  function inferColumns(rows) {
+    const first = rows[0] || {};
+    const keys = Object.keys(first);
+    const out = {};
+    for (const [logical, aliases] of Object.entries(COLUMN_ALIASES)) {
+      out[logical] = keys.find((k) => aliases.includes(normalizeText(k))) || '';
+    }
+    return out;
+  }
+  function rankPriority(value) {
+    const t = normalizeText(value);
+    if (/p\s*0/.test(t)) return 0;
+    if (/p\s*1/.test(t)) return 1;
+    if (/p\s*2/.test(t)) return 2;
+    if (/p\s*3/.test(t)) return 3;
+    if (/p\s*4/.test(t)) return 4;
+    return 99;
+  }
+  function priorityClass(value) {
+    const r = rankPriority(value);
+    if (r === 0) return 'prio-p0';
+    if (r === 1) return 'prio-p1';
+    if (r === 2) return 'prio-p2';
+    if (r === 3) return 'prio-p3';
+    if (r === 4) return 'prio-p4';
+    return 'prio-default';
+  }
+  function formatPriority(value) {
+    const t = asText(value);
+    return t || 'Sans priorité';
+  }
+  function findNodeForStatus(status) {
+    const n = normalizeText(status);
+    if (!n) return null;
+    return STATUS_NODES.find((node) => node.aliases.some((alias) => n === normalizeText(alias) || n.includes(normalizeText(alias)) || normalizeText(alias).includes(n))) || null;
+  }
+  function mapRow(row) {
+    const c = state.columns;
+    const app = asText(row[c.app]);
+    const service = asText(row[c.service]);
+    const status = asText(row[c.status]);
+    const node = findNodeForStatus(status);
+    return {
+      id: Number(row.id),
+      app,
+      service,
+      editor: asText(row[c.editor]),
+      status,
+      step: asText(row[c.step]),
+      priority: asText(row[c.priority]),
+      playstore: asText(row[c.playstore]),
+      comment: asText(row[c.comment]),
+      nodeKey: node ? node.key : null
+    };
+  }
+
+  async function listTables() {
+    try {
+      if (!grist?.docApi?.listTables) return [];
+      const ids = await grist.docApi.listTables();
+      return Array.isArray(ids) ? ids : [];
+    } catch (e) {
+      console.warn('listTables failed', e);
+      return [];
+    }
+  }
+  async function findTableId() {
+    const tables = await listTables();
+    const normalized = new Map(tables.map((t) => [normalizeText(t), t]));
+    for (const cand of CANDIDATE_TABLES) {
+      const found = normalized.get(normalizeText(cand));
+      if (found) return found;
+    }
+    return tables.find((t) => normalizeText(t).includes('applications')) || '';
+  }
+  async function loadData() {
+    try {
+      state.tableId = await findTableId();
+      if (!state.tableId) throw new Error("Impossible de trouver la table B_Applications.");
+      const raw = await grist.docApi.fetchTable(state.tableId);
+      const rows = tableRows(raw);
+      state.columns = inferColumns(rows);
+      if (!state.columns.app || !state.columns.status || !state.columns.service) {
+        throw new Error("Colonnes attendues introuvables dans B_Applications (application, service utilisateur, statut).");
+      }
+      state.rows = rows.map(mapRow).filter((r) => r.app);
+      state.lastRefresh = new Date();
+      render();
+    } catch (error) {
+      console.error(error);
+      renderError(error.message || String(error));
+    }
+  }
+  function renderError(message) {
+    dom.statsBar.innerHTML = '';
+    dom.detailsMetrics.innerHTML = '';
+    dom.detailsList.innerHTML = `<div class="empty-state"><strong>Erreur</strong><div style="margin-top:8px">${escapeHtml(message)}</div></div>`;
+    dom.detailsTitle.textContent = 'Erreur de chargement';
+    dom.detailsDesc.textContent = 'Vérifiez l’accès complet au document et la présence de la table B_Applications.';
+  }
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function computeNodeSummary(nodeKey) {
+    const rows = state.rows.filter((r) => r.nodeKey === nodeKey);
+    return {
+      rows,
+      appCount: unique(rows.map((r) => r.app)).length,
+      demandCount: rows.length
+    };
+  }
+  function renderStats() {
+    const totalApps = unique(state.rows.map((r) => r.app)).length;
+    const totalDemands = state.rows.length;
+    const services = unique(state.rows.map((r) => r.service)).length;
+    const activeSteps = STATUS_NODES.filter((n) => computeNodeSummary(n.key).demandCount > 0).length;
+    const withoutStatus = state.rows.filter((r) => !r.status).length;
+    const items = [
+      ['Applications distinctes', totalApps, 'noms d’applications'],
+      ['Demandes', totalDemands, 'lignes B_Applications'],
+      ['Services', services, 'services demandeurs'],
+      ['Étapes actives', activeSteps, 'étapes avec activité'],
+      ['Sans statut', withoutStatus, 'demandes non positionnées']
+    ];
+    dom.statsBar.innerHTML = items.map(([label, value, sub]) => `
+      <div class="kpi">
+        <div class="kpi-label">${escapeHtml(label)}</div>
+        <div class="kpi-value">${value}</div>
+        <div class="kpi-sub">${escapeHtml(sub)}</div>
+      </div>`).join('');
+  }
+  function renderDiagram() {
+    STATUS_NODES.forEach((node) => {
+      const summary = computeNodeSummary(node.key);
+      const el = document.querySelector(`.flow-node[data-node="${node.key}"]`);
+      if (!el) return;
+      el.querySelector('.node-count').textContent = summary.appCount;
+      el.querySelector('.node-sub').textContent = `${summary.appCount > 1 ? 'applis' : 'appli'} • ${summary.demandCount} ${summary.demandCount > 1 ? 'demandes' : 'demande'}`;
+      el.classList.toggle('active', state.selectedNode === node.key);
+      el.classList.toggle('empty', summary.demandCount === 0);
+    });
+
+    const unknownRows = state.rows.filter((r) => r.status && !r.nodeKey);
+    const emptyRows = state.rows.filter((r) => !r.status);
+    dom.unknownStatusPill.querySelector('strong').textContent = unique(unknownRows.map((r) => r.app)).length;
+    dom.emptyStatusPill.querySelector('strong').textContent = unique(emptyRows.map((r) => r.app)).length;
+  }
+  function groupedForSelection() {
+    let rows = state.rows;
+    let title = 'Toutes les applications';
+    let desc = 'Sélectionnez une étape du processus pour voir les applications concernées.';
+    let badge = 'Toutes les étapes';
+    let badgeOff = true;
+
+    if (state.selectedNode === '__unknown__') {
+      rows = state.rows.filter((r) => r.status && !r.nodeKey);
+      title = 'Autres statuts';
+      desc = 'Applications dont le statut est renseigné mais ne correspond à aucune étape du schéma.';
+      badge = 'Autres / statut non reconnu';
+      badgeOff = false;
+    } else if (state.selectedNode === '__empty__') {
+      rows = state.rows.filter((r) => !r.status);
+      title = 'Sans statut renseigné';
+      desc = 'Applications encore non positionnées dans le processus.';
+      badge = 'Sans statut';
+      badgeOff = false;
+    } else if (state.selectedNode) {
+      const node = STATUS_NODES.find((n) => n.key === state.selectedNode);
+      rows = state.rows.filter((r) => r.nodeKey === state.selectedNode);
+      title = node ? node.label : 'Étape';
+      desc = 'Applications actuellement positionnées sur cette étape du processus.';
+      badge = node ? node.label : 'Étape sélectionnée';
+      badgeOff = false;
+    }
+
+    const groups = new Map();
+    rows.forEach((row) => {
+      const key = normalizeText(row.app);
+      if (!groups.has(key)) {
+        groups.set(key, {
+          app: row.app,
+          editor: row.editor,
+          rows: [],
+          services: new Set(),
+          priorities: [],
+          playstoreValues: new Set(),
+          statuses: new Set(),
+          steps: new Set(),
+          comments: new Set()
+        });
+      }
+      const g = groups.get(key);
+      g.rows.push(row);
+      if (row.service) g.services.add(row.service);
+      if (row.priority) g.priorities.push(row.priority);
+      if (row.playstore) g.playstoreValues.add(row.playstore);
+      if (row.status) g.statuses.add(row.status);
+      if (row.step) g.steps.add(row.step);
+      if (row.comment) g.comments.add(row.comment);
+    });
+    const list = Array.from(groups.values()).map((g) => {
+      g.serviceList = Array.from(g.services).sort();
+      g.playstore = Array.from(g.playstoreValues).join(' · ') || 'Non renseigné';
+      g.bestPriority = g.priorities.sort((a,b) => rankPriority(a)-rankPriority(b))[0] || '';
+      return g;
+    }).sort((a,b) => {
+      const pr = rankPriority(a.bestPriority) - rankPriority(b.bestPriority);
+      if (pr !== 0) return pr;
+      return a.app.localeCompare(b.app, 'fr', { sensitivity: 'base' });
+    });
+
+    return {
+      rows,
+      list,
+      title,
+      desc,
+      badge,
+      badgeOff
+    };
+  }
+  function renderDetails() {
+    const data = groupedForSelection();
+    dom.detailsTitle.textContent = data.title;
+    dom.detailsDesc.textContent = data.desc;
+    dom.selectionBadge.textContent = data.badge;
+    dom.selectionBadge.classList.toggle('off', data.badgeOff);
+
+    const metrics = [
+      ['Applications', data.list.length],
+      ['Demandes', data.rows.length],
+      ['Services', unique(data.rows.map((r)=>r.service)).length]
+    ];
+    dom.detailsMetrics.innerHTML = metrics.map(([label, value]) => `
+      <div class="mini-kpi"><div class="label">${escapeHtml(label)}</div><div class="value">${value}</div></div>`).join('');
+
+    if (!data.list.length) {
+      dom.detailsList.innerHTML = `<div class="empty-state">Aucune application à afficher pour la sélection en cours.</div>`;
+      return;
+    }
+
+    dom.detailsList.innerHTML = data.list.map((app) => {
+      const services = app.serviceList.map((s) => `<span class="service-tag">${escapeHtml(s)}</span>`).join('');
+      const rowItems = app.rows.map((row) => `
+        <div class="row">
+          <div class="row-top">
+            <div>
+              <div class="row-service">${escapeHtml(row.service || 'Service non renseigné')}</div>
+              <div class="small muted" style="margin-top:2px">${escapeHtml(row.status || 'Sans statut')}</div>
+            </div>
+            <span class="priority-pill ${priorityClass(row.priority)}">${escapeHtml(formatPriority(row.priority))}</span>
+          </div>
+          <div class="row-meta">
+            ${row.editor ? `<span class="chip">Éditeur : ${escapeHtml(row.editor)}</span>` : ''}
+            ${row.playstore ? `<span class="chip ${/oui/i.test(row.playstore) ? 'good' : 'warn'}">Playstore : ${escapeHtml(row.playstore)}</span>` : ''}
+            ${row.step ? `<span class="chip">Étape : ${escapeHtml(row.step)}</span>` : ''}
+          </div>
+          ${row.comment ? `<div class="small muted" style="margin-top:8px">${escapeHtml(row.comment)}</div>` : ''}
+        </div>`).join('');
+
+      const comments = Array.from(app.comments).slice(0,2).map((c) => escapeHtml(c)).join(' • ');
+      return `
+        <div class="app-item">
+          <div class="app-head">
+            <div>
+              <div class="app-title">${escapeHtml(app.app)}</div>
+              <div class="app-sub">${escapeHtml(app.editor || 'Éditeur non renseigné')} · ${app.serviceList.length} service(s) · ${app.rows.length} demande(s)</div>
+            </div>
+            <span class="priority-pill ${priorityClass(app.bestPriority)}">${escapeHtml(formatPriority(app.bestPriority))}</span>
+          </div>
+          <div class="chips">
+            <span class="chip ${/oui/i.test(app.playstore) ? 'good' : 'warn'}">Playstore : ${escapeHtml(app.playstore)}</span>
+            ${app.statuses.size ? `<span class="chip">Statut(s) : ${escapeHtml(Array.from(app.statuses).join(' · '))}</span>` : ''}
+          </div>
+          <div class="services">${services}</div>
+          ${comments ? `<div class="small muted" style="margin-top:10px">${comments}</div>` : ''}
+          <div class="rows">${rowItems}</div>
+        </div>`;
+    }).join('');
+  }
+  function render() {
+    renderStats();
+    renderDiagram();
+    renderDetails();
+    setZoom(state.zoom);
+  }
+
+  function setZoom(value) {
+    state.zoom = Math.max(0.7, Math.min(1.8, Math.round(value * 100) / 100));
+    dom.diagramStage.style.transform = `scale(${state.zoom})`;
+    dom.diagramStage.parentElement.style.minHeight = `${790 * state.zoom}px`;
+    dom.zoomChip.textContent = `${Math.round(state.zoom * 100)}%`;
+  }
+
+  function bindEvents() {
+    document.querySelectorAll('.flow-node').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.node;
+        state.selectedNode = state.selectedNode === key ? null : key;
+        render();
+      });
+    });
+    dom.unknownStatusPill.addEventListener('click', () => { state.selectedNode = state.selectedNode === '__unknown__' ? null : '__unknown__'; render(); });
+    dom.emptyStatusPill.addEventListener('click', () => { state.selectedNode = state.selectedNode === '__empty__' ? null : '__empty__'; render(); });
+    dom.zoomInBtn.addEventListener('click', () => setZoom(state.zoom + 0.1));
+    dom.zoomOutBtn.addEventListener('click', () => setZoom(state.zoom - 0.1));
+    dom.resetSelectionBtn.addEventListener('click', () => { state.selectedNode = null; render(); });
+    dom.refreshBtn.addEventListener('click', loadData);
+    dom.stageOuter.addEventListener('wheel', (event) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+      setZoom(state.zoom + (event.deltaY < 0 ? 0.06 : -0.06));
+    }, { passive: false });
+  }
+
+  async function start() {
+    try {
+      if (!window.grist || typeof grist.ready !== 'function') throw new Error('Le script grist-plugin-api.js n’a pas été chargé.');
+      grist.ready({ requiredAccess: 'full' });
+      bindEvents();
+      await loadData();
+    } catch (error) {
+      renderError(error.message || String(error));
+    }
+  }
+  start();
+})();
+</script>
+</body>
+</html>
