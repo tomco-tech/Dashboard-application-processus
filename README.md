@@ -1,19 +1,13 @@
-# Dashboard Applications — Processus v1.1
 
-Widget Grist pour suivre le positionnement des applications dans un processus, à partir de la table `B_Applications`.
+# Dashboard Applications — Processus V1.2
 
-## Correctifs v1.1
+Correction du diagramme pour reproduire exactement la logique métier de référence :
 
-- Diagramme entièrement redessiné dans un SVG unique : les textes, connecteurs et losanges partagent le même repère.
-- Connecteurs arrêtés aux limites des étapes et raccordés aux losanges.
-- Résolution des colonnes Grist de type `Ref`, `RefList`, `Choice`, `ChoiceList` ou texte.
-- La colonne `Statut` peut donc être une référence vers `REF_Backend`.
-- Utilisation prioritaire de la table source associée au widget.
-- Actualisation automatique après modification de `B_Applications`, plus bouton manuel `Rafraîchir`.
-- KPI présents dès l’ouverture et recalculés après le chargement des données.
+- Récupérer l’APK → Qualification SSI ;
+- sorties SSI vers JIRA, PFAI et mise en conformité éditeur ;
+- fusion JIRA / PFAI avant la première décision ;
+- traitement spécifique supplémentaire → qualification fonctionnelle ;
+- branche OK vers Déploiement et tests CU ;
+- branche KO vers Support N3 ACMOSS, puis Support Éditeur.
 
-## Installation
-
-Publier `index.html` sur GitHub Pages, puis ajouter l’URL comme custom widget Grist.
-
-Le widget doit être associé à `B_Applications` et disposer de `Full document access`.
+Le widget utilise uniquement `B_Applications` et la colonne `Statut`.
