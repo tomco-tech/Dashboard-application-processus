@@ -8,13 +8,16 @@
   <style>
     :root{
       --bg:#f4f6fa;
-      --panel:#fff;
+      --panel:#ffffff;
+      --panel-soft:#f8fafc;
       --ink:#162033;
       --muted:#68758b;
       --line:#dbe3ef;
       --line-strong:#c7d2e2;
       --blue:#3157ff;
       --blue-soft:#eaf0ff;
+      --teal:#12806b;
+      --teal-soft:#e8f7f3;
       --green:#14855d;
       --green-soft:#e8f7f0;
       --orange:#b96a14;
@@ -22,12 +25,14 @@
       --red:#c23b34;
       --red-soft:#fdeceb;
       --shadow:0 10px 28px rgba(23,33,52,.08);
+      --shadow-soft:0 5px 18px rgba(23,33,52,.06);
       --radius:18px;
     }
     *{box-sizing:border-box}
     html,body{min-height:100%}
     body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    button{font:inherit;cursor:pointer}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
     .app{min-height:100vh;padding:16px}
     .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
     h1{margin:0;font-size:27px;line-height:1.08;letter-spacing:-.03em}
@@ -35,21 +40,47 @@
     .top-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
     .btn{min-height:35px;padding:7px 11px;border:1px solid var(--line-strong);border-radius:11px;background:#fff;color:#344258;font-weight:750;transition:.15s ease}
     .btn:hover{background:#f9fbfd;border-color:#aebbcf}
+    .btn-primary{background:#294bd8;color:#fff;border-color:#294bd8}
+    .btn-primary:hover{background:#213dbc}
     .zoom-chip{min-width:52px;text-align:center;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#eef2f8;color:#46546a;font-weight:750;font-size:12px}
-    .refresh-state{font-size:12px;color:var(--muted);min-width:80px;text-align:right}
+    .refresh-state{font-size:12px;color:var(--muted);min-width:90px;text-align:right}
 
-    .stats{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:9px;margin-bottom:12px}
-    .kpi{min-height:69px;padding:10px 12px;border:1px solid #e1e7f0;border-radius:14px;background:#eef2f8}
-    .kpi-label{font-size:10.5px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
-    .kpi-value{margin-top:7px;font-size:25px;line-height:1;font-weight:850;letter-spacing:-.035em}
-    .kpi-sub{margin-top:5px;font-size:11.5px;color:var(--muted)}
-
-    .layout{display:grid;grid-template-columns:minmax(650px,1.45fr) minmax(330px,.95fr);gap:12px;align-items:start}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-    .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 11px;border-bottom:1px solid var(--line)}
+    .request-panel{margin-bottom:12px}
+    .request-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+    .request-title{min-width:220px}
     .panel-kicker{font-size:10.5px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-    .panel-name{margin-top:2px;font-size:21px;line-height:1.1;font-weight:850;letter-spacing:-.025em}
+    .panel-name{margin-top:2px;font-size:20px;line-height:1.1;font-weight:850;letter-spacing:-.025em}
     .panel-desc{margin-top:4px;font-size:12px;color:var(--muted)}
+    .request-controls{display:grid;grid-template-columns:minmax(180px,240px) minmax(130px,170px) auto;gap:8px;align-items:end}
+    .control-label{display:block;margin:0 0 5px 2px;font-size:10.5px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+    select{width:100%;height:37px;padding:0 34px 0 10px;border:1px solid var(--line-strong);border-radius:10px;background:#fff;color:var(--ink);outline:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#667085 50%),linear-gradient(135deg,#667085 50%,transparent 50%);background-position:calc(100% - 16px) 15px,calc(100% - 11px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+    select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(49,87,255,.11)}
+    .request-filter-state{padding:8px 14px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .filter-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#2d49c6;border:1px solid #d1dcff;font-size:11.5px;font-weight:750}
+    .filter-pill button{border:0;background:transparent;color:inherit;padding:0;font-weight:900}
+    .request-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:8px;max-height:232px;overflow:auto;padding:10px 12px 13px}
+    .request-item{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 11px;text-align:left;transition:.15s ease;min-width:0}
+    .request-item:hover{border-color:#afbdd0;box-shadow:var(--shadow-soft)}
+    .request-item.active{border-color:#7890ff;box-shadow:0 0 0 2px rgba(49,87,255,.12);background:#fbfcff}
+    .request-item-title{font-weight:850;font-size:13.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .request-item-sub{margin-top:3px;color:var(--muted);font-size:11.5px;font-weight:650;display:flex;justify-content:space-between;gap:8px}
+    .mini-statuses{display:grid;gap:5px;margin-top:8px}
+    .mini-status{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 7px;border-radius:9px;background:#f6f8fb;border:1px solid #e7ecf3;font-size:10.8px}
+    .mini-status-label{color:var(--muted);font-weight:750}
+    .mini-status-value{font-weight:800;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .status-good{color:var(--green)}
+    .status-warn{color:#9d5b05}
+    .status-bad{color:var(--red)}
+    .priority-pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10.8px;font-weight:850;white-space:nowrap}
+    .prio-p0,.prio-p1{background:var(--red-soft);color:#b42318}
+    .prio-p2{background:var(--orange-soft);color:#a85800}
+    .prio-p3{background:#eef3ff;color:#2952d7}
+    .prio-p4,.prio-default{background:#eff2f6;color:#566273}
+    .empty-compact{grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);border:1px dashed #d6deea;border-radius:14px;background:#fafbfd}
+
+    .layout{display:grid;grid-template-columns:minmax(650px,1.45fr) minmax(340px,.95fr);gap:12px;align-items:start}
+    .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 11px;border-bottom:1px solid var(--line)}
     .legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:2px}
     .legend-item{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:650;color:var(--muted)}
     .legend-dot{width:9px;height:9px;border-radius:50%}
@@ -58,50 +89,56 @@
     .diagram-shell{width:1040px;height:920px;transform-origin:top left;position:relative}
     #processSvg{display:block;width:1040px;height:920px;overflow:visible}
     .connector{fill:none;stroke:#9eacc0;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .connector.dashed{stroke-dasharray:6 7}
     .decision-shape{fill:#fff;stroke:#becbdb;stroke-width:2}
     .decision-text{font-size:11px;font-weight:800;fill:#6c788a}
     .process-node{cursor:pointer;outline:none}
     .process-node .hit{fill:transparent;stroke:transparent;stroke-width:1}
     .process-node .selected-bg{fill:#f8fafc;stroke:transparent;rx:14;ry:14}
     .process-node:hover .selected-bg{fill:rgba(49,87,255,.045);stroke:rgba(49,87,255,.12)}
-    .process-node.active .selected-bg{fill:#edf2ff;stroke:#b8c8ff;stroke-width:1.2}
-    .process-node.empty{opacity:.55}
+    .process-node.filter-active .selected-bg{fill:#f0f3ff;stroke:#9fb0ff;stroke-width:1.2}
+    .process-node.selected-qualification .selected-bg{fill:var(--blue-soft);stroke:var(--blue);stroke-width:2}
+    .process-node.selected-flux .selected-bg{fill:var(--teal-soft);stroke:var(--teal);stroke-width:2}
+    .process-node.selected-both .selected-bg{fill:#eef2ff;stroke:#3157ff;stroke-width:2.4;stroke-dasharray:6 3}
+    .process-node.empty{opacity:.48}
     .node-label{font-size:14px;font-weight:780;fill:#344054;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round}
     .node-count{font-size:25px;font-weight:850;fill:#162033;letter-spacing:-.04em;paint-order:stroke;stroke:#fff;stroke-width:6px}
-    .node-meta{font-size:11px;font-weight:700;fill:#8290a3;paint-order:stroke;stroke:#fff;stroke-width:5px}
-
-    .status-strips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px 12px;border-top:1px solid var(--line)}
-    .status-pill{display:inline-flex;align-items:center;gap:9px;border:1px solid #e0e6ef;border-radius:999px;background:#f3f5f9;padding:7px 11px;color:#445063;font-weight:700;font-size:12px;cursor:pointer}
-    .status-pill.active{background:#edf2ff;border-color:#bdcaff;color:#2947cb}
-    .status-pill strong{font-size:15px;color:var(--ink)}
-    .note{padding:0 15px 14px;font-size:11.5px;color:var(--muted)}
+    .node-meta{font-size:10.5px;font-weight:700;fill:#8290a3;paint-order:stroke;stroke:#fff;stroke-width:5px}
 
     .details-head{padding:14px 16px 12px;border-bottom:1px solid var(--line)}
-    .step-badge{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:#edf2ff;color:#2846c8;font-size:12px;font-weight:800;margin-top:9px}
-    .step-badge.off{background:#f2f4f7;color:#4d596a}
-    .details-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
-    .mini-kpi{padding:9px 10px;border:1px solid #e3e9f1;border-radius:13px;background:#f7f9fc}
-    .mini-kpi .label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:850}
-    .mini-kpi .value{margin-top:4px;font-size:21px;line-height:1;font-weight:850}
-    .details-list{max-height:770px;overflow:auto;padding:10px 12px 14px}
+    .details-title{font-size:20px;line-height:1.15;font-weight:850;letter-spacing:-.02em}
+    .details-sub{margin-top:4px;color:var(--muted);font-size:12px}
+    .details-list{max-height:820px;overflow:auto;padding:11px 13px 15px}
     .empty-state{padding:28px 18px;text-align:center;border:1px dashed #d5deeb;border-radius:15px;background:#fafbfd;color:var(--muted)}
-    .app-item{margin-bottom:10px;padding:13px;border:1px solid var(--line);border-radius:15px;background:#fff}
-    .app-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .app-title{font-size:16px;font-weight:850;line-height:1.2;letter-spacing:-.02em}
-    .app-sub{margin-top:4px;font-size:11.5px;color:var(--muted);font-weight:650}
-    .priority-pill{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11.5px;font-weight:850;white-space:nowrap}
-    .prio-p0,.prio-p1{background:var(--red-soft);color:#b42318}.prio-p2{background:var(--orange-soft);color:#a85800}.prio-p3{background:#eef3ff;color:#2952d7}.prio-p4,.prio-default{background:#eff2f6;color:#566273}
-    .chips,.services,.row-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
-    .chip,.service-tag{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#f4f7fb;border:1px solid #e2e8f1;color:#465366;font-size:11.5px;font-weight:700}
-    .chip.good{background:var(--green-soft);border-color:#cae9da;color:#126e4d}.chip.warn{background:var(--orange-soft);border-color:#f5ddbc;color:#995800}
-    .rows{display:grid;gap:8px;margin-top:11px}
-    .row{padding:9px 10px;border:1px solid #e5ebf3;border-radius:13px;background:#f8fafc}
-    .row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .row-service{font-size:12.5px;font-weight:850}.small{font-size:11.5px}.muted{color:var(--muted)}
+    .detail-section{border:1px solid var(--line);border-radius:15px;background:#fff;padding:12px;margin-bottom:10px}
+    .detail-section-title{font-size:10.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+    .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .detail-cell{padding:8px 9px;border:1px solid #e5ebf3;border-radius:11px;background:#f8fafc;min-width:0}
+    .detail-label{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+    .detail-value{margin-top:3px;font-size:12px;font-weight:750;word-break:break-word}
+    .chips{display:flex;flex-wrap:wrap;gap:7px}
+    .chip{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#f4f7fb;border:1px solid #e2e8f1;color:#465366;font-size:11.5px;font-weight:700}
+    .chip.good{background:var(--green-soft);border-color:#cae9da;color:#126e4d}
+    .chip.warn{background:var(--orange-soft);border-color:#f5ddbc;color:#995800}
+    .chip.qual{background:var(--blue-soft);border-color:#cbd7ff;color:#2947cb}
+    .chip.flux{background:var(--teal-soft);border-color:#c7e9e1;color:#0e6d5c}
+    .comment{margin-top:8px;padding:9px 10px;border-radius:11px;background:#f7f9fc;border:1px solid #e4eaf2;color:#536176;font-size:11.5px;white-space:pre-wrap}
+    .flux-row{padding:9px 10px;border:1px solid #e3e9f1;border-radius:12px;background:#f9fbfd;margin-top:7px}
+    .flux-row-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .flux-resource{font-size:12px;font-weight:800;word-break:break-word}
+    .flux-status{font-size:10.8px;font-weight:800;color:#465366;white-space:nowrap}
+    .technical-error{margin:10px 12px 0;padding:10px 12px;border:1px solid #f0c8c5;border-radius:12px;background:#fff1f0;color:#a22b25;font-size:12px}
 
-    @media(max-width:1250px){.layout{grid-template-columns:1fr}.details-list{max-height:none}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
-    @media(max-width:760px){.topbar{flex-direction:column}.stats{grid-template-columns:1fr 1fr}.details-metrics{grid-template-columns:1fr}.app{padding:10px}h1{font-size:23px}}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:18px;z-index:100}
+    .modal-backdrop.hidden{display:none}
+    .modal{width:min(720px,96vw);background:#fff;border-radius:20px;box-shadow:0 24px 70px rgba(15,23,42,.25);padding:18px}
+    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .modal-title{font-size:20px;font-weight:850}
+    .config-grid{display:grid;grid-template-columns:1fr;gap:10px}
+    .config-row label{display:block;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+    @media(max-width:1250px){.layout{grid-template-columns:1fr}.details-list{max-height:none}.request-controls{grid-template-columns:1fr 1fr auto}}
+    @media(max-width:760px){.topbar{flex-direction:column}.request-controls{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}.app{padding:10px}h1{font-size:23px}}
   </style>
 </head>
 <body>
@@ -109,25 +146,43 @@
   <div class="topbar">
     <div>
       <h1>Dashboard Applications — Processus</h1>
-      <div class="subtitle">Suivi du positionnement des applications dans le processus à partir de la table B_Applications.</div>
+      <div class="subtitle">Corrélation entre les demandes de <strong>B_Applications</strong>, la qualification et les travaux de flux.</div>
     </div>
     <div class="top-actions">
+      <button class="btn" id="configureBtn">Configurer</button>
       <button class="btn" id="allBtn">Tout voir</button>
       <button class="btn" id="zoomOutBtn">−</button>
-      <span class="zoom-chip" id="zoomChip">100%</span>
+      <span class="zoom-chip" id="zoomChip">85%</span>
       <button class="btn" id="zoomInBtn">+</button>
       <button class="btn" id="refreshBtn">Rafraîchir</button>
       <span class="refresh-state" id="refreshState">Connexion…</span>
     </div>
   </div>
 
-  <div class="stats">
-    <div class="kpi"><div class="kpi-label">Applications distinctes</div><div class="kpi-value" id="kpiApps">0</div><div class="kpi-sub">noms d’applications</div></div>
-    <div class="kpi"><div class="kpi-label">Demandes</div><div class="kpi-value" id="kpiDemands">0</div><div class="kpi-sub">lignes B_Applications</div></div>
-    <div class="kpi"><div class="kpi-label">Services</div><div class="kpi-value" id="kpiServices">0</div><div class="kpi-sub">services demandeurs</div></div>
-    <div class="kpi"><div class="kpi-label">Étapes actives</div><div class="kpi-value" id="kpiStages">0</div><div class="kpi-sub">étapes avec activité</div></div>
-    <div class="kpi"><div class="kpi-label">Sans statut</div><div class="kpi-value" id="kpiNoStatus">0</div><div class="kpi-sub">demandes non positionnées</div></div>
-  </div>
+  <section class="card request-panel">
+    <div class="request-head">
+      <div class="request-title">
+        <div class="panel-kicker">Demandes applicatives</div>
+        <div class="panel-name">Suivi synthétique par service et application</div>
+        <div class="panel-desc">Sélectionnez une demande pour mettre en évidence sa position dans le processus.</div>
+      </div>
+      <div class="request-controls">
+        <div>
+          <label class="control-label" for="serviceFilter">Service utilisateur</label>
+          <select id="serviceFilter"><option value="">Tous les services</option></select>
+        </div>
+        <div>
+          <label class="control-label" for="priorityFilter">Priorité</label>
+          <select id="priorityFilter"><option value="">Toutes les priorités</option></select>
+        </div>
+        <button class="btn" id="resetFiltersBtn">Réinitialiser</button>
+      </div>
+    </div>
+    <div class="request-filter-state" id="requestFilterState"></div>
+    <div class="request-list" id="requestList"><div class="empty-compact">Chargement des demandes…</div></div>
+  </section>
+
+  <div id="errorBanner"></div>
 
   <div class="layout">
     <section class="card">
@@ -135,10 +190,11 @@
         <div>
           <div class="panel-kicker">Processus global</div>
           <div class="panel-name">Traitement des applications</div>
-          <div class="panel-desc">Cliquez sur une étape pour filtrer les applications. Ctrl + molette permet également de zoomer.</div>
+          <div class="panel-desc">Les compteurs sont calculés par corrélation des trois tables. Cliquez sur une étape pour filtrer la liste.</div>
         </div>
         <div class="legend">
-          <span class="legend-item"><span class="legend-dot" style="background:#3157ff"></span>Étape sélectionnée</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#3157ff"></span>Qualification</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#12806b"></span>Flux</span>
           <span class="legend-item"><span class="legend-dot" style="background:#dbe3ef"></span>Sans activité</span>
         </div>
       </div>
@@ -151,36 +207,20 @@
               </marker>
             </defs>
 
-            <!--
-              Topologie fidèle au processus de référence :
-              APK → Qualification SSI ; trois sorties depuis SSI ; fusion JIRA/PFAI ;
-              traitement spécifique → qualification fonctionnelle ; branche OK vers
-              déploiement et branche KO vers Support N3 / Support Éditeur.
-            -->
             <path class="connector" marker-end="url(#arrowHead)" d="M430 110 V155" />
-
-            <!-- Sorties de Qualification SSI -->
             <path class="connector" marker-end="url(#arrowHead)" d="M330 195 H120 V305" />
             <path class="connector" marker-end="url(#arrowHead)" d="M530 195 H635" />
             <path class="connector" marker-end="url(#arrowHead)" d="M430 235 V305" />
-
-            <!-- Fusion JIRA / PFAI puis décision -->
             <path class="connector" d="M120 385 V420 H430" />
             <path class="connector" d="M430 385 V420" />
             <path class="connector" marker-end="url(#arrowHead)" d="M430 420 V438" />
             <polygon class="decision-shape" points="430,438 447,455 430,472 413,455" />
-
-            <!-- Tronc principal -->
             <path class="connector" marker-end="url(#arrowHead)" d="M430 472 V495" />
             <path class="connector" marker-end="url(#arrowHead)" d="M430 580 V620" />
             <path class="connector" marker-end="url(#arrowHead)" d="M430 705 V738" />
             <polygon class="decision-shape" points="430,738 447,755 430,772 413,755" />
-
-            <!-- Branche OK vers Déploiement -->
             <path class="connector" marker-end="url(#arrowHead)" d="M413 755 H160 V815" />
             <text class="decision-text" x="376" y="748">OK</text>
-
-            <!-- Branche KO vers décision Support -->
             <path class="connector" marker-end="url(#arrowHead)" d="M447 755 H703" />
             <text class="decision-text" x="478" y="748">KO</text>
             <polygon class="decision-shape" points="720,738 737,755 720,772 703,755" />
@@ -191,14 +231,14 @@
               <rect class="selected-bg" x="0" y="0" width="200" height="80" />
               <rect class="hit" x="0" y="0" width="200" height="80" />
               <text class="node-label" x="100" y="25" text-anchor="middle">Récupérer l'APK</text>
-              <text class="node-count" x="86" y="62" text-anchor="end">0</text><text class="node-meta" x="96" y="60" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="86" y="62" text-anchor="end">0</text><text class="node-meta" x="96" y="60" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="ssi" tabindex="0" transform="translate(330,155)">
               <rect class="selected-bg" x="0" y="0" width="200" height="80" />
               <rect class="hit" x="0" y="0" width="200" height="80" />
               <text class="node-label" x="100" y="25" text-anchor="middle">Qualification SSI</text>
-              <text class="node-count" x="86" y="62" text-anchor="end">0</text><text class="node-meta" x="96" y="60" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="86" y="62" text-anchor="end">0</text><text class="node-meta" x="96" y="60" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="conformite" tabindex="0" transform="translate(635,155)">
@@ -206,7 +246,7 @@
               <rect class="hit" x="0" y="0" width="250" height="98" />
               <text class="node-label" x="125" y="20" text-anchor="middle">Demande de mise en</text>
               <text class="node-label" x="125" y="39" text-anchor="middle">conformité auprès de l'éditeur</text>
-              <text class="node-count" x="111" y="78" text-anchor="end">0</text><text class="node-meta" x="121" y="76" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="111" y="78" text-anchor="end">0</text><text class="node-meta" x="121" y="76" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="jira" tabindex="0" transform="translate(20,305)">
@@ -214,7 +254,7 @@
               <rect class="hit" x="0" y="0" width="200" height="80" />
               <text class="node-label" x="100" y="23" text-anchor="middle">Traitement demande</text>
               <text class="node-label" x="100" y="42" text-anchor="middle">JIRA</text>
-              <text class="node-count" x="86" y="70" text-anchor="end">0</text><text class="node-meta" x="96" y="68" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="86" y="70" text-anchor="end">0</text><text class="node-meta" x="96" y="68" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="pfai" tabindex="0" transform="translate(330,305)">
@@ -222,7 +262,7 @@
               <rect class="hit" x="0" y="0" width="200" height="80" />
               <text class="node-label" x="100" y="23" text-anchor="middle">Traitement demande</text>
               <text class="node-label" x="100" y="42" text-anchor="middle">PFAI</text>
-              <text class="node-count" x="86" y="70" text-anchor="end">0</text><text class="node-meta" x="96" y="68" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="86" y="70" text-anchor="end">0</text><text class="node-meta" x="96" y="68" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="specifique" tabindex="0" transform="translate(320,495)">
@@ -230,7 +270,7 @@
               <rect class="hit" x="0" y="0" width="220" height="85" />
               <text class="node-label" x="110" y="24" text-anchor="middle">Traitement spécifique</text>
               <text class="node-label" x="110" y="43" text-anchor="middle">supplémentaire</text>
-              <text class="node-count" x="96" y="73" text-anchor="end">0</text><text class="node-meta" x="106" y="71" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="96" y="73" text-anchor="end">0</text><text class="node-meta" x="106" y="71" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="fonctionnelle" tabindex="0" transform="translate(330,620)">
@@ -238,167 +278,789 @@
               <rect class="hit" x="0" y="0" width="200" height="85" />
               <text class="node-label" x="100" y="24" text-anchor="middle">Qualification</text>
               <text class="node-label" x="100" y="43" text-anchor="middle">fonctionnelle</text>
-              <text class="node-count" x="86" y="73" text-anchor="end">0</text><text class="node-meta" x="96" y="71" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="86" y="73" text-anchor="end">0</text><text class="node-meta" x="96" y="71" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="deploiement" tabindex="0" transform="translate(50,815)">
               <rect class="selected-bg" x="0" y="0" width="220" height="78" />
               <rect class="hit" x="0" y="0" width="220" height="78" />
               <text class="node-label" x="110" y="24" text-anchor="middle">Déploiement et tests CU</text>
-              <text class="node-count" x="96" y="61" text-anchor="end">0</text><text class="node-meta" x="106" y="59" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="96" y="61" text-anchor="end">0</text><text class="node-meta" x="106" y="59" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="n3" tabindex="0" transform="translate(815,715)">
               <rect class="selected-bg" x="0" y="0" width="180" height="78" />
               <rect class="hit" x="0" y="0" width="180" height="78" />
               <text class="node-label" x="90" y="24" text-anchor="middle">Support N3 ACMOSS</text>
-              <text class="node-count" x="76" y="61" text-anchor="end">0</text><text class="node-meta" x="86" y="59" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="76" y="61" text-anchor="end">0</text><text class="node-meta" x="86" y="59" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
 
             <g class="process-node" data-node="editeur" tabindex="0" transform="translate(815,825)">
               <rect class="selected-bg" x="0" y="0" width="180" height="78" />
               <rect class="hit" x="0" y="0" width="180" height="78" />
               <text class="node-label" x="90" y="24" text-anchor="middle">Support Éditeur</text>
-              <text class="node-count" x="76" y="61" text-anchor="end">0</text><text class="node-meta" x="86" y="59" text-anchor="start">appli • 0 demande</text>
+              <text class="node-count" x="76" y="61" text-anchor="end">0</text><text class="node-meta" x="86" y="59" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
             </g>
           </svg>
         </div>
       </div>
-      <div class="status-strips">
-        <button class="status-pill" id="unknownBtn"><span>Autres / statut non reconnu</span><strong>0</strong></button>
-        <button class="status-pill" id="emptyBtn"><span>Sans statut renseigné</span><strong>0</strong></button>
-      </div>
-      <div class="note">Les compteurs des étapes représentent les applications distinctes. Le détail présente les demandes sous-jacentes : une demande correspond à une ligne de B_Applications.</div>
     </section>
 
     <section class="card">
       <div class="details-head">
-        <div class="panel-kicker">Détail</div>
-        <div class="panel-name" id="detailsTitle">Toutes les applications</div>
-        <div class="panel-desc" id="detailsDesc">Sélectionnez une étape du processus pour voir les applications concernées.</div>
-        <span class="step-badge off" id="selectionBadge">Toutes les étapes</span>
-        <div class="details-metrics">
-          <div class="mini-kpi"><div class="label">Applications</div><div class="value" id="detailApps">0</div></div>
-          <div class="mini-kpi"><div class="label">Demandes</div><div class="value" id="detailDemands">0</div></div>
-          <div class="mini-kpi"><div class="label">Services</div><div class="value" id="detailServices">0</div></div>
-        </div>
+        <div class="panel-kicker">Détail de la demande</div>
+        <div class="details-title" id="detailsTitle">Sélectionnez une demande</div>
+        <div class="details-sub" id="detailsSub">Le détail de la qualification et des flux apparaîtra ici.</div>
       </div>
-      <div class="details-list" id="detailsList"><div class="empty-state">Chargement des données…</div></div>
+      <div class="details-list" id="detailsList">
+        <div class="empty-state">Cliquez sur une demande de la liste pour visualiser sa position dans le processus.</div>
+      </div>
     </section>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="configBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="panel-kicker">Configuration</div>
+        <div class="modal-title">Associer les tables Grist</div>
+        <div class="panel-desc">Sélectionnez les identifiants techniques des trois tables.</div>
+      </div>
+      <button class="btn" id="closeConfigBtn">Fermer</button>
+    </div>
+    <div class="config-grid">
+      <div class="config-row">
+        <label for="configRequests">Demandes — B_Applications</label>
+        <select id="configRequests"></select>
+      </div>
+      <div class="config-row">
+        <label for="configQualification">Qualification — REF_Applications Qualifiées</label>
+        <select id="configQualification"></select>
+      </div>
+      <div class="config-row">
+        <label for="configFlux">Flux — REF_Flux Applications</label>
+        <select id="configFlux"></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelConfigBtn">Annuler</button>
+      <button class="btn btn-primary" id="saveConfigBtn">Enregistrer</button>
+    </div>
   </div>
 </div>
 
 <script>
 (() => {
-  const STATUS_NODES = [
-    {key:'jira',label:'Traitement demande JIRA',aliases:['traitement demande jira','jira']},
-    {key:'apk',label:"Récupérer l'APK",aliases:["recuperer l apk",'recuperer apk','recup apk','récupérer l apk','récupérer apk']},
+  const PROCESS_NODES = [
+    {key:'apk',label:"Récupérer l'APK",aliases:["recuperer l apk","recuperer apk","recup apk","récupérer l apk","récupérer apk"]},
     {key:'ssi',label:'Qualification SSI',aliases:['qualification ssi','ssi']},
     {key:'conformite',label:"Demande de mise en conformité auprès de l'éditeur",aliases:['demande de mise en conformite aupres de l editeur','mise en conformite','conformite editeur','demande conformite editeur']},
-    {key:'pfai',label:'Traitement demande PFAI',aliases:['traitement demande pfai','pfai']},
+    {key:'jira',label:'Traitement demande JIRA',aliases:['traitement demande jira','demande jira','jira']},
+    {key:'pfai',label:'Traitement demande PFAI',aliases:['traitement demande pfai','demande pfai','pfai']},
     {key:'specifique',label:'Traitement spécifique supplémentaire',aliases:['traitement specifique supplementaire','specifique supplementaire','traitement spécifique supplémentaire','spécifique supplémentaire']},
     {key:'fonctionnelle',label:'Qualification fonctionnelle',aliases:['qualification fonctionnelle','fonctionnelle']},
-    {key:'deploiement',label:'Déploiement et tests CU',aliases:['deploiement et tests cu','deploiement tests cu','tests cu','déploiement et tests cu']},
+    {key:'deploiement',label:'Déploiement et tests CU',aliases:['deploiement et tests cu','deploiement tests cu','tests cu','déploiement et tests cu','deploiement cu']},
     {key:'n3',label:'Support N3 ACMOSS',aliases:['support n3 acmoss','n3 acmoss','support acmoss']},
     {key:'editeur',label:'Support Éditeur',aliases:['support editeur','support éditeur','editeur','éditeur']}
   ];
-  const ALIASES={
-    app:["nom de l application","nom application","application"],
-    service:["service utilisateur","service demandeur","service"],
-    editor:["editeur","éditeur"],
-    status:["statut"],
-    step:["etape","étape"],
-    priority:["priorite dud","priorité dud","priorite","priorité"],
-    playstore:["playstore"],
-    comment:["commmentaire","commentaire"]
+
+  const TABLE_DEFS = {
+    requests: {
+      label:'B_Applications',
+      candidates:['B_Applications','B Applications','B_APPL','Applications'],
+      fields:{
+        service:['service utilisateur','service demandeur'],
+        app:["nom de l application","nom de l'application",'application','nom application'],
+        priority:['priorite dud','priorité dud','priorite','priorité'],
+        editor:['editeur','éditeur'],
+        playstore:['playstore'],
+        paid:['application payante','payante'],
+        device:["dispositif d acces","dispositif d'accès",'dispositifs'],
+        vector:["vecteur d acces","vecteur d'accès",'vecteur'],
+        privateAccess:['acces a des ressources privees','accès à des ressources privées','ressources privees','ressources privées'],
+        version:["version de l application utilisee","version de l'application utilisée",'version']
+      }
+    },
+    qualification: {
+      label:'REF_Applications Qualifiées',
+      candidates:['REF_Applications_Qualifiees','REF_Applications Qualifiees','REF_Applications_Qualifiées','Applications_Qualifiees','Applications Qualifiées'],
+      fields:{
+        app:["nom de l application","nom de l'application",'application','nom application'],
+        type:['type'],
+        version:['version qualifiee','version qualifiée','version'],
+        editor:['editeur','éditeur'],
+        ssi:['qualification ssi','statut ssi'],
+        functional:['qualification fonctionnelle','statut fonctionnel','statut fonctionnelle'],
+        commentFunctional:['commentaire fonctionnelle','commentaire fonctionnel'],
+        commentSSI:['commentaire ssi']
+      }
+    },
+    flux: {
+      label:'REF_Flux Applications',
+      candidates:['REF_Flux_Applications','REF_Flux Applications','RRF_Flux_Applications','RRF_Flux Applications','Flux_Apps','Flux Applications','REF_Flux_Apps'],
+      fields:{
+        service:['service demandeur','service utilisateur','service'],
+        app:["nom de l application","nom de l'application",'application','nom application'],
+        version:["version de l application","version de l'application",'version'],
+        resource:['adresse des ressources','adresse ressource','ressource'],
+        resourceDescription:['description des ressources','description ressource'],
+        protocols:['protocoles','protocole'],
+        exposure:["type d exposition","type d'exposition"],
+        services:['services necessaires','services nécessaires'],
+        comments:['commentaires','commentaire'],
+        status:['statut flux','statut']
+      }
+    }
   };
-  const state={tableId:'',rows:[],selected:null,zoom:.85,metaByTable:new Map(),metaById:new Map(),refCatalogs:new Map(),cols:{},reloadTimer:null,loading:false};
-  const $=id=>document.getElementById(id);
-  const dom={
-    kpiApps:$('kpiApps'),kpiDemands:$('kpiDemands'),kpiServices:$('kpiServices'),kpiStages:$('kpiStages'),kpiNoStatus:$('kpiNoStatus'),
-    detailApps:$('detailApps'),detailDemands:$('detailDemands'),detailServices:$('detailServices'),detailsTitle:$('detailsTitle'),detailsDesc:$('detailsDesc'),detailsList:$('detailsList'),selectionBadge:$('selectionBadge'),
-    zoomChip:$('zoomChip'),diagramShell:$('diagramShell'),diagramScroll:$('diagramScroll'),refreshState:$('refreshState'),unknownBtn:$('unknownBtn'),emptyBtn:$('emptyBtn')
+
+  const FINAL_STATUSES = ['valide','validee','qualifie','qualifiee','termine','terminee','traite','traitee','deploye','deployee','accepte','complete','complet','ok'];
+
+  const state = {
+    options:{tableIds:{}},
+    tableIds:[],
+    metadataByTable:new Map(),
+    metadataById:new Map(),
+    refCatalogs:new Map(),
+    tables:{},
+    requests:[],
+    selectedRequestId:null,
+    nodeFilter:null,
+    serviceFilter:'',
+    priorityFilter:'',
+    zoom:.85,
+    loading:false,
+    optionsReceived:false
   };
-  const text=v=>v==null?'':String(v).trim();
-  const norm=v=>text(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[_\-]+/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-  const unique=a=>Array.from(new Set(a.filter(Boolean)));
-  const esc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  function rowsFrom(raw){if(!raw)return[];if(Array.isArray(raw))return raw;if(Array.isArray(raw.id))return raw.id.map((id,i)=>{const r={id};Object.keys(raw).forEach(k=>r[k]=raw[k][i]);return r});return[]}
-  function refTarget(type){const m=/^(?:Ref|RefList):(.+)$/.exec(type||'');return m?m[1]:''}
-  function listValues(v){if(Array.isArray(v))return v[0]==='L'?v.slice(1):v;return v==null||v===''?[]:[v]}
-  function priorityRank(v){const n=norm(v);for(let i=0;i<=9;i++)if(new RegExp(`p\\s*${i}(?:\\b|$)`).test(n))return i;return 99}
-  function priorityClass(v){const r=priorityRank(v);return r===0?'prio-p0':r===1?'prio-p1':r===2?'prio-p2':r===3?'prio-p3':r===4?'prio-p4':'prio-default'}
-  function tableColMap(tableId){return state.metaByTable.get(tableId)||new Map()}
-  function findCol(tableId,aliases){const metas=[...tableColMap(tableId).values()];const target=aliases.map(norm);return metas.find(m=>target.includes(norm(m.colId))||target.includes(norm(m.label)))||null}
-  async function loadMetadata(){
-    const [tablesRaw,colsRaw]=await Promise.all([grist.docApi.fetchTable('_grist_Tables'),grist.docApi.fetchTable('_grist_Tables_column')]);
-    const tables=rowsFrom(tablesRaw), cols=rowsFrom(colsRaw), tableByMeta=new Map(tables.map(r=>[Number(r.id),r.tableId]));
-    state.metaByTable=new Map();state.metaById=new Map();
-    cols.forEach(r=>{const tableId=tableByMeta.get(Number(r.parentId));if(!tableId)return;const m={id:Number(r.id),tableId,colId:r.colId,label:r.label||r.colId,type:r.type||'Any',visibleCol:Number(r.visibleCol||0),displayCol:Number(r.displayCol||0)};state.metaById.set(m.id,m);if(!state.metaByTable.has(tableId))state.metaByTable.set(tableId,new Map());state.metaByTable.get(tableId).set(m.colId,m)});
-    state.metaById.forEach(m=>{m.refTableId=refTarget(m.type);const vis=state.metaById.get(m.visibleCol);const disp=state.metaById.get(m.displayCol);m.visibleColId=vis?.colId||'';m.displayColId=disp?.colId||''});
+
+  const $ = (id) => document.getElementById(id);
+  const dom = {
+    configureBtn:$('configureBtn'),allBtn:$('allBtn'),zoomOutBtn:$('zoomOutBtn'),zoomInBtn:$('zoomInBtn'),zoomChip:$('zoomChip'),
+    refreshBtn:$('refreshBtn'),refreshState:$('refreshState'),diagramShell:$('diagramShell'),diagramScroll:$('diagramScroll'),
+    serviceFilter:$('serviceFilter'),priorityFilter:$('priorityFilter'),resetFiltersBtn:$('resetFiltersBtn'),requestList:$('requestList'),requestFilterState:$('requestFilterState'),
+    detailsTitle:$('detailsTitle'),detailsSub:$('detailsSub'),detailsList:$('detailsList'),errorBanner:$('errorBanner'),
+    configBackdrop:$('configBackdrop'),configRequests:$('configRequests'),configQualification:$('configQualification'),configFlux:$('configFlux'),
+    closeConfigBtn:$('closeConfigBtn'),cancelConfigBtn:$('cancelConfigBtn'),saveConfigBtn:$('saveConfigBtn')
+  };
+
+  const text = (v) => v == null ? '' : String(v).trim();
+  const norm = (v) => text(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[_\-]+/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+  const esc = (v) => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const unique = (arr) => Array.from(new Set(arr.filter(Boolean)));
+  const requestKey = (service, app) => `${norm(service)}||${norm(app)}`;
+  const isYes = (v) => ['oui','yes','true','1'].includes(norm(v)) || norm(v).startsWith('oui ');
+  const isFinal = (v) => FINAL_STATUSES.includes(norm(v));
+
+  function rowsFrom(raw){
+    if(!raw) return [];
+    if(Array.isArray(raw)) return raw;
+    if(Array.isArray(raw.id)) return raw.id.map((id,i)=>{const r={id};Object.keys(raw).forEach(k=>r[k]=raw[k][i]);return r;});
+    return [];
   }
-  function chooseDisplayCol(tableId,raw,sourceMeta){
+  function listValues(v){
+    if(Array.isArray(v)) return v[0]==='L' ? v.slice(1) : v;
+    return v == null || v === '' ? [] : [v];
+  }
+  function refTarget(type){
+    const m=/^(?:Ref|RefList):(.+)$/.exec(type||'');
+    return m ? m[1] : '';
+  }
+  function priorityRank(v){
+    const n=norm(v);
+    for(let i=0;i<=9;i++) if(new RegExp(`p\\s*${i}(?:\\b|$)`).test(n)) return i;
+    return 99;
+  }
+  function priorityClass(v){
+    const r=priorityRank(v);
+    return r===0?'prio-p0':r===1?'prio-p1':r===2?'prio-p2':r===3?'prio-p3':r===4?'prio-p4':'prio-default';
+  }
+  function formatPriority(v){return text(v)||'Sans priorité';}
+  function nodeForStatus(status){
+    const n=norm(status);
+    if(!n || isFinal(status)) return null;
+    return PROCESS_NODES.find(node=>node.aliases.some(alias=>{
+      const a=norm(alias);
+      return n===a || n.includes(a) || a.includes(n);
+    })) || null;
+  }
+
+  async function safeFetchTable(tableId){
+    if(!tableId) throw new Error('Identifiant de table vide');
+    return grist.docApi.fetchTable(tableId);
+  }
+
+  async function loadMetadata(){
+    state.metadataByTable=new Map();
+    state.metadataById=new Map();
+    try{
+      const [tablesRaw,columnsRaw]=await Promise.all([safeFetchTable('_grist_Tables'),safeFetchTable('_grist_Tables_column')]);
+      const tables=rowsFrom(tablesRaw), columns=rowsFrom(columnsRaw);
+      const tableByMetaId=new Map(tables.map(row=>[Number(row.id),row.tableId]));
+      columns.forEach(row=>{
+        const tableId=tableByMetaId.get(Number(row.parentId));
+        if(!tableId) return;
+        const meta={
+          id:Number(row.id),tableId,colId:row.colId,label:row.label||row.colId,type:row.type||'Any',
+          visibleCol:Number(row.visibleCol||0),displayCol:Number(row.displayCol||0)
+        };
+        state.metadataById.set(meta.id,meta);
+        if(!state.metadataByTable.has(tableId)) state.metadataByTable.set(tableId,new Map());
+        state.metadataByTable.get(tableId).set(meta.colId,meta);
+      });
+      state.metadataById.forEach(meta=>{
+        meta.refTableId=refTarget(meta.type);
+        const visible=state.metadataById.get(meta.visibleCol);
+        const display=state.metadataById.get(meta.displayCol);
+        meta.visibleColId=visible?.colId||'';
+        meta.displayColId=display?.colId||'';
+      });
+    }catch(error){
+      console.warn('Métadonnées Grist indisponibles',error);
+    }
+  }
+
+  function resolveColumn(raw,tableId,aliases){
     const keys=Object.keys(raw||{}).filter(k=>k!=='id');
-    if(sourceMeta?.visibleColId&&keys.includes(sourceMeta.visibleColId))return sourceMeta.visibleColId;
-    if(sourceMeta?.displayColId&&keys.includes(sourceMeta.displayColId))return sourceMeta.displayColId;
-    const preferred=['nom','libelle','libellé','valeur','name','statut','titre','description'];
-    const metas=[...tableColMap(tableId).values()];
-    for(const p of preferred){const m=metas.find(x=>norm(x.colId)===norm(p)||norm(x.label)===norm(p));if(m&&keys.includes(m.colId))return m.colId}
+    const metaMap=state.metadataByTable.get(tableId)||new Map();
+    const candidates=keys.map(key=>({key,keyNorm:norm(key),labelNorm:norm(metaMap.get(key)?.label||key)}));
+    const targets=aliases.map(norm);
+    for(const target of targets){
+      const exact=candidates.find(c=>c.keyNorm===target||c.labelNorm===target);
+      if(exact) return exact.key;
+    }
+    for(const target of targets){
+      const partial=candidates.find(c=>c.keyNorm.includes(target)||c.labelNorm.includes(target)||target.includes(c.keyNorm)||target.includes(c.labelNorm));
+      if(partial) return partial.key;
+    }
+    return '';
+  }
+
+  function chooseDisplayColumn(tableId,raw,sourceMetas){
+    const keys=Object.keys(raw||{}).filter(k=>k!=='id');
+    for(const sourceMeta of sourceMetas){
+      if(sourceMeta?.visibleColId && keys.includes(sourceMeta.visibleColId)) return sourceMeta.visibleColId;
+      if(sourceMeta?.displayColId && keys.includes(sourceMeta.displayColId)) return sourceMeta.displayColId;
+    }
+    const targetMeta=state.metadataByTable.get(tableId)||new Map();
+    const preferred=['nom','nom long','libelle','libellé','valeur','statut','titre','name','label','code'];
+    for(const p of preferred){
+      const key=keys.find(k=>norm(k)===norm(p)||norm(targetMeta.get(k)?.label)===norm(p));
+      if(key) return key;
+    }
     return keys[0]||'';
   }
-  async function buildRefCatalogs(){
+
+  async function buildReferenceCatalogs(){
     state.refCatalogs=new Map();
-    const refs=unique(Object.values(state.cols).map(m=>m?.refTableId));
-    await Promise.all(refs.map(async tableId=>{try{const raw=await grist.docApi.fetchTable(tableId);const rows=rowsFrom(raw);const sourceMeta=Object.values(state.cols).find(m=>m?.refTableId===tableId);const col=chooseDisplayCol(tableId,raw,sourceMeta);const byId=new Map(rows.map(r=>[Number(r.id),text(r[col])||`#${r.id}`]));state.refCatalogs.set(tableId,byId)}catch(e){console.warn('Référentiel indisponible',tableId,e)}}));
+    const refs=new Map();
+    Object.values(state.tables).forEach(table=>{
+      Object.values(table.columns||{}).forEach(colId=>{
+        const meta=table.meta?.get(colId);
+        if(meta?.refTableId){
+          if(!refs.has(meta.refTableId)) refs.set(meta.refTableId,[]);
+          refs.get(meta.refTableId).push(meta);
+        }
+      });
+    });
+    await Promise.all([...refs.entries()].map(async([tableId,sourceMetas])=>{
+      try{
+        const raw=await safeFetchTable(tableId);
+        const rows=rowsFrom(raw);
+        const displayCol=chooseDisplayColumn(tableId,raw,sourceMetas);
+        const items=rows.map(row=>({id:Number(row.id),label:text(row[displayCol])||`#${row.id}`,row})).filter(x=>x.id);
+        state.refCatalogs.set(tableId,{displayCol,items,byId:new Map(items.map(x=>[x.id,x]))});
+      }catch(error){
+        console.warn('Référentiel non chargé',tableId,error);
+      }
+    }));
   }
-  function display(meta,raw){
-    if(!meta)return text(raw);
-    if(meta.type.startsWith('RefList:')){const cat=state.refCatalogs.get(meta.refTableId)||new Map();return listValues(raw).map(v=>cat.get(Number(v))||text(v)).filter(Boolean).join(', ')}
-    if(meta.type.startsWith('Ref:')){const cat=state.refCatalogs.get(meta.refTableId)||new Map();return cat.get(Number(raw))||text(raw)}
-    if(meta.type==='ChoiceList')return listValues(raw).map(text).filter(Boolean).join(', ');
+
+  function displayRaw(raw,meta){
+    if(raw===null||raw===undefined||raw==='') return '';
+    const type=meta?.type||'Any';
+    const target=refTarget(type);
+    if(target){
+      const catalog=state.refCatalogs.get(target);
+      const resolveOne=(value)=>{
+        if(value===null||value===undefined||value===''||value===0||value==='0') return '';
+        return catalog?.byId.get(Number(value))?.label || text(value);
+      };
+      if(type.startsWith('RefList:')) return listValues(raw).map(resolveOne).filter(Boolean).join(', ');
+      return resolveOne(raw);
+    }
+    if(type==='ChoiceList') return listValues(raw).map(text).filter(Boolean).join(', ');
     return text(raw);
   }
-  function statusNode(status){const n=norm(status);if(!n)return null;return STATUS_NODES.find(x=>x.aliases.some(a=>{const na=norm(a);return n===na||n.includes(na)||na.includes(n)}))||null}
-  function mapRow(row){
-    const v=k=>display(state.cols[k],row[state.cols[k]?.colId]);
-    const status=v('status'),node=statusNode(status);
-    return{id:Number(row.id),app:v('app'),service:v('service'),editor:v('editor'),status,step:v('step'),priority:v('priority'),playstore:v('playstore'),comment:v('comment'),nodeKey:node?.key||null};
+
+  function fieldDisplay(table,row,field){
+    const colId=table.columns[field];
+    if(!colId) return '';
+    return displayRaw(row[colId],table.meta?.get(colId));
   }
-  async function sourceTableId(){
-    try{const selected=await grist.getTable().getTableId();if(selected&&findCol(selected,ALIASES.app)&&findCol(selected,ALIASES.service)&&findCol(selected,ALIASES.status))return selected}catch(e){}
-    const tables=await grist.docApi.listTables();
-    const exact=tables.find(t=>norm(t)==='b applications');if(exact)return exact;
-    return tables.find(t=>norm(t).includes('b applications')&&!norm(t).includes('ref'))||tables.find(t=>norm(t).includes('applications')&&!norm(t).includes('ref'))||'';
-  }
-  async function load(){
-    if(state.loading)return;state.loading=true;dom.refreshState.textContent='Chargement…';
+
+  async function listTables(){
     try{
-      await loadMetadata();state.tableId=await sourceTableId();if(!state.tableId)throw new Error('Table B_Applications introuvable.');
-      state.cols={};for(const [k,a] of Object.entries(ALIASES))state.cols[k]=findCol(state.tableId,a);
-      if(!state.cols.app||!state.cols.service||!state.cols.status)throw new Error('Colonnes Application, Service utilisateur ou Statut introuvables dans B_Applications.');
-      await buildRefCatalogs();const raw=await grist.docApi.fetchTable(state.tableId);state.rows=rowsFrom(raw).map(mapRow).filter(r=>r.app);
-      dom.refreshState.textContent=`Actualisé à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;render();
-    }catch(e){console.error(e);dom.refreshState.textContent='Erreur';dom.detailsList.innerHTML=`<div class="empty-state"><strong>Erreur de chargement</strong><div style="margin-top:8px">${esc(e.message||e)}</div></div>`}
-    finally{state.loading=false}
+      const ids=await grist.docApi.listTables();
+      state.tableIds=Array.isArray(ids)?ids:[];
+    }catch(error){
+      state.tableIds=[];
+      console.warn('listTables indisponible',error);
+    }
   }
-  function scheduleLoad(){clearTimeout(state.reloadTimer);state.reloadTimer=setTimeout(load,300)}
-  function nodeSummary(key){const rows=state.rows.filter(r=>r.nodeKey===key);return{rows,apps:unique(rows.map(r=>norm(r.app))).length,demands:rows.length}}
-  function setNodeCount(key,summary){const g=document.querySelector(`.process-node[data-node="${key}"]`);if(!g)return;g.querySelector('.node-count').textContent=summary.apps;g.querySelector('.node-meta').textContent=`${summary.apps===1?'appli':'applis'} • ${summary.demands} ${summary.demands===1?'demande':'demandes'}`;g.classList.toggle('active',state.selected===key);g.classList.toggle('empty',summary.demands===0)}
-  function renderKpis(){dom.kpiApps.textContent=unique(state.rows.map(r=>norm(r.app))).length;dom.kpiDemands.textContent=state.rows.length;dom.kpiServices.textContent=unique(state.rows.map(r=>norm(r.service))).length;dom.kpiStages.textContent=STATUS_NODES.filter(n=>nodeSummary(n.key).demands>0).length;dom.kpiNoStatus.textContent=state.rows.filter(r=>!r.status).length}
-  function renderDiagram(){STATUS_NODES.forEach(n=>setNodeCount(n.key,nodeSummary(n.key)));const unknown=state.rows.filter(r=>r.status&&!r.nodeKey),empty=state.rows.filter(r=>!r.status);dom.unknownBtn.querySelector('strong').textContent=unique(unknown.map(r=>norm(r.app))).length;dom.emptyBtn.querySelector('strong').textContent=unique(empty.map(r=>norm(r.app))).length;dom.unknownBtn.classList.toggle('active',state.selected==='__unknown__');dom.emptyBtn.classList.toggle('active',state.selected==='__empty__')}
-  function selectedRows(){if(state.selected==='__unknown__')return state.rows.filter(r=>r.status&&!r.nodeKey);if(state.selected==='__empty__')return state.rows.filter(r=>!r.status);if(state.selected)return state.rows.filter(r=>r.nodeKey===state.selected);return state.rows}
-  function selectedInfo(){if(state.selected==='__unknown__')return['Autres statuts','Applications dont le statut ne correspond pas encore à une étape du schéma.','Autres / statut non reconnu',false];if(state.selected==='__empty__')return['Sans statut renseigné','Applications non positionnées dans le processus.','Sans statut',false];if(state.selected){const n=STATUS_NODES.find(x=>x.key===state.selected);return[n?.label||'Étape','Applications actuellement positionnées sur cette étape.',n?.label||'Étape',false]}return['Toutes les applications','Sélectionnez une étape du processus pour voir les applications concernées.','Toutes les étapes',true]}
-  function renderDetails(){const rows=selectedRows();const [title,desc,badge,off]=selectedInfo();dom.detailsTitle.textContent=title;dom.detailsDesc.textContent=desc;dom.selectionBadge.textContent=badge;dom.selectionBadge.classList.toggle('off',off);dom.detailDemands.textContent=rows.length;dom.detailServices.textContent=unique(rows.map(r=>norm(r.service))).length;
-    const groups=new Map();rows.forEach(r=>{const k=norm(r.app);if(!groups.has(k))groups.set(k,{app:r.app,editor:r.editor,rows:[],services:new Set(),priorities:[],play:new Set(),statuses:new Set(),steps:new Set(),comments:new Set()});const g=groups.get(k);g.rows.push(r);if(r.service)g.services.add(r.service);if(r.priority)g.priorities.push(r.priority);if(r.playstore)g.play.add(r.playstore);if(r.status)g.statuses.add(r.status);if(r.step)g.steps.add(r.step);if(r.comment)g.comments.add(r.comment)});
-    const list=[...groups.values()].map(g=>({...g,serviceList:[...g.services].sort((a,b)=>a.localeCompare(b,'fr')),best:g.priorities.sort((a,b)=>priorityRank(a)-priorityRank(b))[0]||'',playstore:[...g.play].join(' · ')||'Non renseigné'})).sort((a,b)=>priorityRank(a.best)-priorityRank(b.best)||a.app.localeCompare(b.app,'fr'));
-    dom.detailApps.textContent=list.length;if(!list.length){dom.detailsList.innerHTML='<div class="empty-state">Aucune application à afficher pour la sélection en cours.</div>';return}
-    dom.detailsList.innerHTML=list.map(g=>{const services=g.serviceList.map(s=>`<span class="service-tag">${esc(s)}</span>`).join('');const subrows=g.rows.map(r=>`<div class="row"><div class="row-top"><div><div class="row-service">${esc(r.service||'Service non renseigné')}</div><div class="small muted" style="margin-top:2px">${esc(r.status||'Sans statut')}</div></div><span class="priority-pill ${priorityClass(r.priority)}">${esc(r.priority||'Sans priorité')}</span></div><div class="row-meta">${r.editor?`<span class="chip">Éditeur : ${esc(r.editor)}</span>`:''}${r.playstore?`<span class="chip ${/oui/i.test(r.playstore)?'good':'warn'}">Playstore : ${esc(r.playstore)}</span>`:''}${r.step?`<span class="chip">Étape : ${esc(r.step)}</span>`:''}</div>${r.comment?`<div class="small muted" style="margin-top:8px">${esc(r.comment)}</div>`:''}</div>`).join('');return`<div class="app-item"><div class="app-head"><div><div class="app-title">${esc(g.app)}</div><div class="app-sub">${esc(g.editor||'Éditeur non renseigné')} · ${g.serviceList.length} service(s) · ${g.rows.length} demande(s)</div></div><span class="priority-pill ${priorityClass(g.best)}">${esc(g.best||'Sans priorité')}</span></div><div class="chips"><span class="chip ${/oui/i.test(g.playstore)?'good':'warn'}">Playstore : ${esc(g.playstore)}</span>${g.statuses.size?`<span class="chip">Statut(s) : ${esc([...g.statuses].join(' · '))}</span>`:''}</div><div class="services">${services}</div><div class="rows">${subrows}</div></div>`}).join('')
+
+  function findTableId(def,override){
+    if(override && state.tableIds.includes(override)) return override;
+    const byNorm=new Map(state.tableIds.map(id=>[norm(id),id]));
+    for(const candidate of def.candidates){
+      const exact=byNorm.get(norm(candidate));
+      if(exact) return exact;
+    }
+    const tokens=norm(def.label).split(' ').filter(Boolean);
+    return state.tableIds.find(id=>tokens.every(token=>norm(id).includes(token)))||'';
   }
-  function render(){renderKpis();renderDiagram();renderDetails();setZoom(state.zoom)}
-  function setZoom(z){state.zoom=Math.max(.7,Math.min(1.6,Math.round(z*100)/100));dom.diagramShell.style.transform=`scale(${state.zoom})`;dom.diagramShell.style.marginRight=`${Math.max(0,1040*state.zoom-1040)}px`;dom.diagramShell.style.marginBottom=`${Math.max(0,920*state.zoom-920)}px`;dom.zoomChip.textContent=`${Math.round(state.zoom*100)}%`}
-  function choose(key){state.selected=state.selected===key?null:key;render()}
-  function bind(){document.querySelectorAll('.process-node').forEach(g=>{g.addEventListener('click',()=>choose(g.dataset.node));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(g.dataset.node)}})});$('allBtn').onclick=()=>{state.selected=null;render()};$('refreshBtn').onclick=load;$('zoomInBtn').onclick=()=>setZoom(state.zoom+.1);$('zoomOutBtn').onclick=()=>setZoom(state.zoom-.1);dom.unknownBtn.onclick=()=>choose('__unknown__');dom.emptyBtn.onclick=()=>choose('__empty__');dom.diagramScroll.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();setZoom(state.zoom+(e.deltaY<0?.06:-.06))},{passive:false})}
-  async function start(){try{grist.ready({requiredAccess:'full'});bind();render();await load();if(typeof grist.onRecords==='function')grist.onRecords(()=>scheduleLoad())}catch(e){console.error(e);dom.refreshState.textContent='Erreur';dom.detailsList.innerHTML=`<div class="empty-state">${esc(e.message||e)}</div>`}}
+
+  async function loadTable(key){
+    const def=TABLE_DEFS[key];
+    const tableId=findTableId(def,state.options.tableIds?.[key]);
+    if(!tableId) throw new Error(`Table « ${def.label} » introuvable.`);
+    const raw=await safeFetchTable(tableId);
+    const columns={};
+    Object.entries(def.fields).forEach(([field,aliases])=>columns[field]=resolveColumn(raw,tableId,aliases));
+    return {key,def,tableId,raw,rows:rowsFrom(raw),columns,meta:state.metadataByTable.get(tableId)||new Map()};
+  }
+
+  function summarizeStatuses(values,emptyLabel){
+    const vals=unique(values.map(text).filter(Boolean));
+    if(!vals.length) return emptyLabel;
+    if(vals.every(isFinal)) return 'Validé';
+    return vals.join(' / ');
+  }
+
+  function deriveQualification(request,qRows){
+    if(!qRows.length){
+      return {
+        required:true,created:false,complete:false,label:'Ligne à créer',
+        ssiStatus:'Non démarrée',functionalStatus:'Non démarrée',
+        commentSSI:'',commentFunctional:'',
+        activeNodes:new Map([['apk',new Set(['qualification'])]])
+      };
+    }
+    const table=state.tables.qualification;
+    const ssiValues=qRows.map(row=>fieldDisplay(table,row,'ssi')).filter(Boolean);
+    const functionalValues=qRows.map(row=>fieldDisplay(table,row,'functional')).filter(Boolean);
+    const commentSSI=unique(qRows.map(row=>fieldDisplay(table,row,'commentSSI')).filter(Boolean)).join('\n');
+    const commentFunctional=unique(qRows.map(row=>fieldDisplay(table,row,'commentFunctional')).filter(Boolean)).join('\n');
+    const ssiComplete=ssiValues.length>0 && ssiValues.every(isFinal);
+    const functionalComplete=functionalValues.length>0 && functionalValues.every(isFinal);
+    const complete=ssiComplete && functionalComplete;
+    const activeNodes=new Map();
+    const add=(key)=>{if(!key)return;if(!activeNodes.has(key))activeNodes.set(key,new Set());activeNodes.get(key).add('qualification');};
+    if(!complete){
+      ssiValues.filter(v=>!isFinal(v)).forEach(v=>add(nodeForStatus(v)?.key||'ssi'));
+      functionalValues.filter(v=>!isFinal(v)).forEach(v=>add(nodeForStatus(v)?.key||'fonctionnelle'));
+      if(!ssiValues.length && !functionalValues.length) add('apk');
+      else{
+        if(!ssiValues.length && !ssiComplete) add('ssi');
+        if(!functionalValues.length && !functionalComplete) add('fonctionnelle');
+      }
+    }
+    return {
+      required:!complete,created:true,complete,
+      label:complete?'Qualifiée':`SSI : ${summarizeStatuses(ssiValues,'À démarrer')} · Fonctionnelle : ${summarizeStatuses(functionalValues,'À démarrer')}`,
+      ssiStatus:summarizeStatuses(ssiValues,'À démarrer'),
+      functionalStatus:summarizeStatuses(functionalValues,'À démarrer'),
+      commentSSI,commentFunctional,activeNodes
+    };
+  }
+
+  function needsFlux(request){
+    return isYes(request.privateAccess) || /\brie\b/.test(norm(request.vector));
+  }
+
+  function deriveFlux(request,fluxRows){
+    const required=needsFlux(request);
+    if(!required){
+      return {required:false,created:false,complete:true,label:'N.A.',statuses:[],activeNodes:new Map(),rows:[]};
+    }
+    if(!fluxRows.length){
+      return {required:true,created:false,complete:false,label:'Ligne(s) à créer',statuses:[],activeNodes:new Map(),rows:[]};
+    }
+    const table=state.tables.flux;
+    const statuses=fluxRows.map(row=>fieldDisplay(table,row,'status')).filter(Boolean);
+    const complete=statuses.length>0 && statuses.every(isFinal);
+    const activeNodes=new Map();
+    const add=(key)=>{if(!key)return;if(!activeNodes.has(key))activeNodes.set(key,new Set());activeNodes.get(key).add('flux');};
+    statuses.filter(v=>!isFinal(v)).forEach(v=>{
+      const node=nodeForStatus(v);
+      if(node && !['ssi','fonctionnelle'].includes(node.key)) add(node.key);
+    });
+    const uniq=unique(statuses);
+    let label='';
+    if(complete) label='Traité';
+    else if(!uniq.length) label='Sans statut';
+    else if(uniq.length===1) label=uniq[0];
+    else label=`${fluxRows.length} flux · ${uniq.join(' / ')}`;
+    return {required:true,created:true,complete,label,statuses:uniq,activeNodes,rows:fluxRows};
+  }
+
+  function mergeActiveNodes(qualification,flux){
+    const result=new Map();
+    const addFrom=(map)=>{
+      map.forEach((sources,key)=>{
+        if(!result.has(key)) result.set(key,new Set());
+        sources.forEach(source=>result.get(key).add(source));
+      });
+    };
+    addFrom(qualification.activeNodes);
+    addFrom(flux.activeNodes);
+    return result;
+  }
+
+  function normalizeTables(){
+    const requestTable=state.tables.requests;
+    const qualificationTable=state.tables.qualification;
+    const fluxTable=state.tables.flux;
+
+    const qualificationRows=qualificationTable.rows.map(row=>({
+      row,
+      app:fieldDisplay(qualificationTable,row,'app')
+    })).filter(x=>x.app);
+    const qualificationByApp=new Map();
+    qualificationRows.forEach(item=>{
+      const key=norm(item.app);
+      if(!qualificationByApp.has(key)) qualificationByApp.set(key,[]);
+      qualificationByApp.get(key).push(item.row);
+    });
+
+    const fluxRows=fluxTable.rows.map(row=>({
+      row,
+      service:fieldDisplay(fluxTable,row,'service'),
+      app:fieldDisplay(fluxTable,row,'app')
+    })).filter(x=>x.service&&x.app);
+    const fluxByRequest=new Map();
+    fluxRows.forEach(item=>{
+      const key=requestKey(item.service,item.app);
+      if(!fluxByRequest.has(key)) fluxByRequest.set(key,[]);
+      fluxByRequest.get(key).push(item.row);
+    });
+
+    state.requests=requestTable.rows.map(row=>{
+      const request={
+        id:Number(row.id),
+        service:fieldDisplay(requestTable,row,'service'),
+        app:fieldDisplay(requestTable,row,'app'),
+        priority:fieldDisplay(requestTable,row,'priority'),
+        editor:fieldDisplay(requestTable,row,'editor'),
+        playstore:fieldDisplay(requestTable,row,'playstore'),
+        paid:fieldDisplay(requestTable,row,'paid'),
+        device:fieldDisplay(requestTable,row,'device'),
+        vector:fieldDisplay(requestTable,row,'vector'),
+        privateAccess:fieldDisplay(requestTable,row,'privateAccess'),
+        version:fieldDisplay(requestTable,row,'version'),
+        rawRow:row
+      };
+      const qRows=qualificationByApp.get(norm(request.app))||[];
+      const fRows=fluxByRequest.get(requestKey(request.service,request.app))||[];
+      request.qualification=deriveQualification(request,qRows);
+      request.flux=deriveFlux(request,fRows);
+      request.activeNodes=mergeActiveNodes(request.qualification,request.flux);
+      return request;
+    }).filter(request=>request.service&&request.app);
+  }
+
+  async function loadData(){
+    if(state.loading) return;
+    state.loading=true;
+    dom.refreshState.textContent='Chargement…';
+    dom.errorBanner.innerHTML='';
+    try{
+      await listTables();
+      await loadMetadata();
+      const [requests,qualification,flux]=await Promise.all([loadTable('requests'),loadTable('qualification'),loadTable('flux')]);
+      state.tables={requests,qualification,flux};
+      await buildReferenceCatalogs();
+      normalizeTables();
+      populateFilters();
+      if(state.selectedRequestId && !state.requests.some(r=>r.id===state.selectedRequestId)) state.selectedRequestId=null;
+      render();
+      dom.refreshState.textContent=`Actualisé à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+    }catch(error){
+      console.error(error);
+      dom.errorBanner.innerHTML=`<div class="technical-error"><strong>Chargement impossible.</strong> ${esc(error.message||String(error))} Vérifiez l’accès complet et utilisez « Configurer » si nécessaire.</div>`;
+      dom.refreshState.textContent='Erreur';
+      if(!state.options.tableIds?.requests || !state.options.tableIds?.qualification || !state.options.tableIds?.flux) openConfig();
+    }finally{
+      state.loading=false;
+    }
+  }
+
+  function baseFilteredRequests(){
+    return state.requests.filter(request=>{
+      if(state.serviceFilter && request.service!==state.serviceFilter) return false;
+      if(state.priorityFilter && request.priority!==state.priorityFilter) return false;
+      return true;
+    });
+  }
+
+  function visibleRequests(){
+    return baseFilteredRequests().filter(request=>!state.nodeFilter || request.activeNodes.has(state.nodeFilter));
+  }
+
+  function populateFilters(){
+    const currentService=state.serviceFilter;
+    const currentPriority=state.priorityFilter;
+    const services=unique(state.requests.map(r=>r.service)).sort((a,b)=>a.localeCompare(b,'fr'));
+    const priorities=unique(state.requests.map(r=>r.priority).filter(v=>v&&v!=='0')).sort((a,b)=>priorityRank(a)-priorityRank(b)||a.localeCompare(b,'fr'));
+    dom.serviceFilter.innerHTML='<option value="">Tous les services</option>'+services.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    dom.priorityFilter.innerHTML='<option value="">Toutes les priorités</option>'+priorities.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    dom.serviceFilter.value=services.includes(currentService)?currentService:'';
+    dom.priorityFilter.value=priorities.includes(currentPriority)?currentPriority:'';
+    state.serviceFilter=dom.serviceFilter.value;
+    state.priorityFilter=dom.priorityFilter.value;
+  }
+
+  function requestStatusClass(kind){
+    if(kind.complete) return 'status-good';
+    if(kind.required && !kind.created) return 'status-bad';
+    if(kind.required) return 'status-warn';
+    return '';
+  }
+
+  function renderRequestFilters(){
+    const bits=[];
+    if(state.nodeFilter){
+      const node=PROCESS_NODES.find(n=>n.key===state.nodeFilter);
+      bits.push(`<span class="filter-pill">Étape : ${esc(node?.label||state.nodeFilter)} <button data-clear-filter="node">×</button></span>`);
+    }
+    const count=visibleRequests().length;
+    bits.push(`<span class="panel-desc">${count} demande${count>1?'s':''} affichée${count>1?'s':''}</span>`);
+    dom.requestFilterState.innerHTML=bits.join('');
+    dom.requestFilterState.querySelector('[data-clear-filter="node"]')?.addEventListener('click',()=>{state.nodeFilter=null;render();});
+  }
+
+  function renderRequestList(){
+    const list=visibleRequests().sort((a,b)=>priorityRank(a.priority)-priorityRank(b.priority)||a.app.localeCompare(b.app,'fr')||a.service.localeCompare(b.service,'fr'));
+    if(state.selectedRequestId && !list.some(r=>r.id===state.selectedRequestId)) state.selectedRequestId=null;
+    if(!list.length){
+      dom.requestList.innerHTML='<div class="empty-compact">Aucune demande ne correspond aux filtres sélectionnés.</div>';
+      return;
+    }
+    dom.requestList.innerHTML=list.map(request=>`
+      <button class="request-item ${state.selectedRequestId===request.id?'active':''}" data-request-id="${request.id}">
+        <div class="request-item-title">${esc(request.app)}</div>
+        <div class="request-item-sub"><span>${esc(request.service)}</span><span class="priority-pill ${priorityClass(request.priority)}">${esc(formatPriority(request.priority))}</span></div>
+        <div class="mini-statuses">
+          <div class="mini-status"><span class="mini-status-label">Qualification</span><span class="mini-status-value ${requestStatusClass(request.qualification)}">${esc(request.qualification.label)}</span></div>
+          <div class="mini-status"><span class="mini-status-label">Flux</span><span class="mini-status-value ${requestStatusClass(request.flux)}">${esc(request.flux.label)}</span></div>
+        </div>
+      </button>`).join('');
+    dom.requestList.querySelectorAll('[data-request-id]').forEach(button=>button.addEventListener('click',()=>{
+      state.selectedRequestId=Number(button.dataset.requestId);
+      render();
+    }));
+  }
+
+  function nodeSummary(nodeKey){
+    const requests=baseFilteredRequests().filter(r=>r.activeNodes.has(nodeKey));
+    const apps=new Set(requests.map(r=>norm(r.app)));
+    let q=0,f=0;
+    requests.forEach(r=>{
+      const sources=r.activeNodes.get(nodeKey)||new Set();
+      if(sources.has('qualification')) q++;
+      if(sources.has('flux')) f++;
+    });
+    return {appCount:apps.size,demandCount:requests.length,q,f};
+  }
+
+  function renderDiagram(){
+    const selected=state.requests.find(r=>r.id===state.selectedRequestId)||null;
+    PROCESS_NODES.forEach(node=>{
+      const element=document.querySelector(`.process-node[data-node="${node.key}"]`);
+      if(!element) return;
+      const summary=nodeSummary(node.key);
+      element.querySelector('.node-count').textContent=summary.appCount;
+      element.querySelector('.node-meta').textContent=`Q ${summary.q} · F ${summary.f} · ${summary.demandCount} dem.`;
+      element.classList.toggle('empty',summary.demandCount===0);
+      element.classList.toggle('filter-active',state.nodeFilter===node.key);
+      element.classList.remove('selected-qualification','selected-flux','selected-both');
+      if(selected?.activeNodes.has(node.key)){
+        const sources=selected.activeNodes.get(node.key);
+        if(sources.has('qualification')&&sources.has('flux')) element.classList.add('selected-both');
+        else if(sources.has('qualification')) element.classList.add('selected-qualification');
+        else if(sources.has('flux')) element.classList.add('selected-flux');
+      }
+    });
+  }
+
+  function activeNodeChips(request){
+    const chips=[];
+    request.activeNodes.forEach((sources,key)=>{
+      const node=PROCESS_NODES.find(n=>n.key===key);
+      if(!node) return;
+      const cls=sources.has('qualification')&&sources.has('flux')?'qual':sources.has('qualification')?'qual':'flux';
+      const prefix=sources.has('qualification')&&sources.has('flux')?'Qualification + Flux':sources.has('qualification')?'Qualification':'Flux';
+      chips.push(`<span class="chip ${cls}">${esc(prefix)} : ${esc(node.label)}</span>`);
+    });
+    return chips.length?chips.join(''):'<span class="chip good">Aucune étape active détectée</span>';
+  }
+
+  function renderDetails(){
+    const request=state.requests.find(r=>r.id===state.selectedRequestId);
+    if(!request){
+      dom.detailsTitle.textContent='Sélectionnez une demande';
+      dom.detailsSub.textContent='Le détail de la qualification et des flux apparaîtra ici.';
+      dom.detailsList.innerHTML='<div class="empty-state">Cliquez sur une demande de la liste pour visualiser sa position dans le processus.</div>';
+      return;
+    }
+    dom.detailsTitle.textContent=`${request.app} — ${request.service}`;
+    dom.detailsSub.textContent=`Demande B_Applications #${request.id}`;
+    const q=request.qualification;
+    const f=request.flux;
+    const fluxTable=state.tables.flux;
+    const fluxRows=f.rows.map(row=>{
+      const resource=fieldDisplay(fluxTable,row,'resource')||fieldDisplay(fluxTable,row,'resourceDescription')||'Ressource non renseignée';
+      const status=fieldDisplay(fluxTable,row,'status')||'Sans statut';
+      const protocols=fieldDisplay(fluxTable,row,'protocols');
+      const comments=fieldDisplay(fluxTable,row,'comments');
+      return `<div class="flux-row">
+        <div class="flux-row-head"><span class="flux-resource">${esc(resource)}</span><span class="flux-status">${esc(status)}</span></div>
+        ${protocols?`<div class="panel-desc" style="margin-top:4px">Protocole : ${esc(protocols)}</div>`:''}
+        ${comments?`<div class="comment">${esc(comments)}</div>`:''}
+      </div>`;
+    }).join('');
+
+    dom.detailsList.innerHTML=`
+      <div class="detail-section">
+        <div class="detail-section-title">Demande initiale</div>
+        <div class="detail-grid">
+          <div class="detail-cell"><div class="detail-label">Service</div><div class="detail-value">${esc(request.service)}</div></div>
+          <div class="detail-cell"><div class="detail-label">Priorité</div><div class="detail-value">${esc(formatPriority(request.priority))}</div></div>
+          <div class="detail-cell"><div class="detail-label">Éditeur</div><div class="detail-value">${esc(request.editor||'Non renseigné')}</div></div>
+          <div class="detail-cell"><div class="detail-label">Version utilisée</div><div class="detail-value">${esc(request.version||'Non renseignée')}</div></div>
+          <div class="detail-cell"><div class="detail-label">Application payante</div><div class="detail-value">${esc(request.paid||'Non renseigné')}</div></div>
+          <div class="detail-cell"><div class="detail-label">Ressources privées</div><div class="detail-value">${esc(request.privateAccess||'Non renseigné')}</div></div>
+          <div class="detail-cell" style="grid-column:1/-1"><div class="detail-label">Vecteur d'accès</div><div class="detail-value">${esc(request.vector||'Non renseigné')}</div></div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Position dans le processus</div>
+        <div class="chips">${activeNodeChips(request)}</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Qualification — REF_Applications Qualifiées</div>
+        <div class="chips">
+          <span class="chip ${q.created?'good':'warn'}">${q.created?'Ligne trouvée':'Ligne à créer'}</span>
+          <span class="chip ${q.complete?'good':'qual'}">${q.complete?'Application qualifiée':'Qualification en cours / à lancer'}</span>
+        </div>
+        <div class="detail-grid" style="margin-top:9px">
+          <div class="detail-cell"><div class="detail-label">Qualification SSI</div><div class="detail-value">${esc(q.ssiStatus)}</div></div>
+          <div class="detail-cell"><div class="detail-label">Qualification fonctionnelle</div><div class="detail-value">${esc(q.functionalStatus)}</div></div>
+        </div>
+        ${q.commentSSI?`<div class="comment"><strong>Commentaire SSI</strong><br>${esc(q.commentSSI)}</div>`:''}
+        ${q.commentFunctional?`<div class="comment"><strong>Commentaire fonctionnel</strong><br>${esc(q.commentFunctional)}</div>`:''}
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-section-title">Flux — REF_Flux Applications</div>
+        <div class="chips">
+          <span class="chip ${f.required?'warn':'good'}">Besoin de flux : ${f.required?'Oui':'Non'}</span>
+          ${f.required?`<span class="chip ${f.created?'good':'warn'}">${f.created?`${f.rows.length} ligne(s) trouvée(s)`:'Ligne(s) à créer'}</span>`:''}
+          ${f.statuses.length?`<span class="chip flux">${esc(f.statuses.join(' / '))}</span>`:''}
+        </div>
+        ${fluxRows||(!f.required?'<div class="comment">Aucun travail de flux n’est requis d’après les informations de B_Applications.</div>':'<div class="comment">Aucune ligne correspondant au couple service + application n’a été trouvée.</div>')}
+      </div>`;
+  }
+
+  function render(){
+    renderRequestFilters();
+    renderRequestList();
+    renderDiagram();
+    renderDetails();
+    setZoom(state.zoom);
+  }
+
+  function setZoom(value){
+    state.zoom=Math.max(.65,Math.min(1.55,Math.round(value*100)/100));
+    dom.diagramShell.style.transform=`scale(${state.zoom})`;
+    dom.diagramShell.parentElement.style.minHeight=`${920*state.zoom}px`;
+    dom.zoomChip.textContent=`${Math.round(state.zoom*100)}%`;
+  }
+
+  async function openConfig(){
+    await listTables();
+    const options=['<option value="">Sélectionner une table</option>',...state.tableIds.filter(id=>!id.startsWith('_grist_')).sort().map(id=>`<option value="${esc(id)}">${esc(id)}</option>`)].join('');
+    dom.configRequests.innerHTML=options;
+    dom.configQualification.innerHTML=options;
+    dom.configFlux.innerHTML=options;
+    dom.configRequests.value=state.options.tableIds?.requests||findTableId(TABLE_DEFS.requests,'');
+    dom.configQualification.value=state.options.tableIds?.qualification||findTableId(TABLE_DEFS.qualification,'');
+    dom.configFlux.value=state.options.tableIds?.flux||findTableId(TABLE_DEFS.flux,'');
+    dom.configBackdrop.classList.remove('hidden');
+  }
+
+  function closeConfig(){dom.configBackdrop.classList.add('hidden');}
+
+  async function saveConfig(){
+    state.options.tableIds={
+      requests:dom.configRequests.value,
+      qualification:dom.configQualification.value,
+      flux:dom.configFlux.value
+    };
+    await grist.setOptions(state.options);
+    closeConfig();
+    await loadData();
+  }
+
+  function bindEvents(){
+    dom.configureBtn.addEventListener('click',openConfig);
+    dom.closeConfigBtn.addEventListener('click',closeConfig);
+    dom.cancelConfigBtn.addEventListener('click',closeConfig);
+    dom.saveConfigBtn.addEventListener('click',saveConfig);
+    dom.configBackdrop.addEventListener('click',event=>{if(event.target===dom.configBackdrop)closeConfig();});
+    dom.serviceFilter.addEventListener('change',()=>{state.serviceFilter=dom.serviceFilter.value;state.selectedRequestId=null;render();});
+    dom.priorityFilter.addEventListener('change',()=>{state.priorityFilter=dom.priorityFilter.value;state.selectedRequestId=null;render();});
+    dom.resetFiltersBtn.addEventListener('click',()=>{state.serviceFilter='';state.priorityFilter='';state.nodeFilter=null;state.selectedRequestId=null;dom.serviceFilter.value='';dom.priorityFilter.value='';render();});
+    dom.allBtn.addEventListener('click',()=>{state.nodeFilter=null;state.selectedRequestId=null;render();});
+    dom.zoomInBtn.addEventListener('click',()=>setZoom(state.zoom+.1));
+    dom.zoomOutBtn.addEventListener('click',()=>setZoom(state.zoom-.1));
+    dom.refreshBtn.addEventListener('click',loadData);
+    document.querySelectorAll('.process-node').forEach(node=>{
+      const activate=()=>{const key=node.dataset.node;state.nodeFilter=state.nodeFilter===key?null:key;state.selectedRequestId=null;render();};
+      node.addEventListener('click',activate);
+      node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
+    });
+    dom.diagramScroll.addEventListener('wheel',event=>{
+      if(!event.ctrlKey)return;
+      event.preventDefault();
+      setZoom(state.zoom+(event.deltaY<0?.06:-.06));
+    },{passive:false});
+  }
+
+  async function start(){
+    bindEvents();
+    try{
+      grist.ready({requiredAccess:'full'});
+      if(typeof grist.onOptions==='function'){
+        grist.onOptions(options=>{
+          state.optionsReceived=true;
+          state.options=options&&typeof options==='object'?options:{tableIds:{}};
+        });
+      }
+      if(typeof grist.onRecords==='function'){
+        let timer=null;
+        grist.onRecords(()=>{clearTimeout(timer);timer=setTimeout(loadData,350);});
+      }
+      await new Promise(resolve=>setTimeout(resolve,250));
+      await loadData();
+    }catch(error){
+      console.error(error);
+      dom.errorBanner.innerHTML=`<div class="technical-error">${esc(error.message||String(error))}</div>`;
+      dom.refreshState.textContent='Erreur';
+    }
+  }
+
   start();
 })();
 </script>
