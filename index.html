@@ -3,1066 +3,905 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard Applications — Processus</title>
-  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <title>Dashboard Applications — Applications, Travaux et Détails</title>
   <style>
-    :root{
-      --bg:#f4f6fa;
-      --panel:#ffffff;
-      --panel-soft:#f8fafc;
-      --ink:#162033;
-      --muted:#68758b;
-      --line:#dbe3ef;
-      --line-strong:#c7d2e2;
-      --blue:#3157ff;
-      --blue-soft:#eaf0ff;
-      --teal:#12806b;
-      --teal-soft:#e8f7f3;
-      --green:#14855d;
-      --green-soft:#e8f7f0;
-      --orange:#b96a14;
-      --orange-soft:#fff3e4;
-      --red:#c23b34;
-      --red-soft:#fdeceb;
-      --shadow:0 10px 28px rgba(23,33,52,.08);
-      --shadow-soft:0 5px 18px rgba(23,33,52,.06);
-      --radius:18px;
+    :root {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --ink: #162033;
+      --muted: #657084;
+      --line: #dce3ed;
+      --line-strong: #c9d3e1;
+      --blue: #3157ff;
+      --blue-soft: #eef2ff;
+      --blue-dark: #2444d8;
+      --green: #138a5b;
+      --red: #c9342f;
+      --orange: #d97706;
+      --shadow: 0 18px 44px rgba(29, 43, 68, .16);
+      --shadow-soft: 0 6px 20px rgba(29, 43, 68, .07);
+      --radius: 16px;
     }
-    *{box-sizing:border-box}
-    html,body{min-height:100%}
-    body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    button,input,select{font:inherit}
-    button{cursor:pointer}
-    .app{min-height:100vh;padding:16px}
-    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
-    h1{margin:0;font-size:27px;line-height:1.08;letter-spacing:-.03em}
-    .subtitle{margin-top:5px;color:var(--muted);font-size:12px}
-    .top-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-    .btn{min-height:35px;padding:7px 11px;border:1px solid var(--line-strong);border-radius:11px;background:#fff;color:#344258;font-weight:750;transition:.15s ease}
-    .btn:hover{background:#f9fbfd;border-color:#aebbcf}
-    .btn-primary{background:#294bd8;color:#fff;border-color:#294bd8}
-    .btn-primary:hover{background:#213dbc}
-    .zoom-chip{min-width:52px;text-align:center;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#eef2f8;color:#46546a;font-weight:750;font-size:12px}
-    .refresh-state{font-size:12px;color:var(--muted);min-width:90px;text-align:right}
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; padding: 14px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+    .brand-block { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+    .brand-block h1 { margin: 0; font-size: 22px; line-height: 1.1; letter-spacing: -.025em; }
+    .last-refresh { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .top-actions { display: flex; gap: 8px; }
+    .btn { border: 1px solid transparent; border-radius: 10px; min-height: 36px; padding: 8px 13px; font-weight: 750; transition: .16s ease; background: white; }
+    .btn--primary { background: var(--blue); color: #fff; box-shadow: 0 7px 17px rgba(49,87,255,.22); }
+    .btn--primary:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .btn--ghost { background: #fff; color: #344054; border-color: var(--line); }
+    .btn--ghost:hover { border-color: #aeb9ca; background: #f9fbfd; }
+    .compact-filter { min-width: 0; }
+    .level-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .level-label {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #59677b;
+      font-size: 9px;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 900;
+    }
+    .panel-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; }
+    .filter-btn, .sort-btn {
+      min-height: 28px;
+      padding: 3px 7px;
+      border-radius: 8px;
+      font-size: 10px;
+      line-height: 1;
+    }
+    .filter-btn.is-active, .sort-btn.is-active { border-color: #9aa9bd; background: #eef2f7; color: #26354b; }
+    .filter-count {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      margin-left: 4px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #344054;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 900;
+    }
+    .filter-btn.is-active .filter-count { display: inline-flex; }
+    .panel-filter-panel, .panel-sort-panel {
+      flex: 0 0 auto;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+    }
+    .sort-grid { display: grid; grid-template-columns: 1fr; gap: 7px; }
+    .sort-grid select { height: 34px; min-height: 34px; font-size: 11px; font-weight: 800; }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(130px, 1fr));
+      gap: 7px;
+      align-items: center;
+    }
+    .filter-grid select, .filter-grid .btn { height: 34px; min-height: 34px; font-size: 11px; }
+    .filter-grid .filter-reset { grid-column: 1 / -1; justify-self: stretch; }
+    input, select, textarea {
+      width: 100%; border: 1px solid var(--line-strong); border-radius: 10px; background: #fff; color: var(--ink); outline: none;
+    }
+    input, select { height: 37px; padding: 0 10px; }
+    select:not([multiple]) {
+      -webkit-appearance: none; -moz-appearance: none; appearance: none;
+      padding-right: 34px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.25 6 6.25 11 1.25' fill='none' stroke='%23576378' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; background-size: 12px 8px;
+    }
+    textarea { padding: 10px; resize: vertical; min-height: 96px; line-height: 1.45; }
+    input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(49,87,255,.11); }
+    .kpi-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .kpi {
+      display: inline-flex; align-items: baseline; gap: 6px; min-height: 28px; padding: 4px 8px;
+      border-radius: 9px; background: #e9edf3; border: 1px solid #dde3eb; box-shadow: none;
+    }
+    .kpi__label { color: #637086; font-size: 8px; text-transform: uppercase; letter-spacing: .04em; font-weight: 850; }
+    .kpi__value { color: #26354b; font-size: 13px; line-height: 1; font-weight: 900; }
+    .workspace-scroll { overflow-x: auto; padding-bottom: 4px; }
+    .workspace {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(300px, 1fr));
+      gap: 10px;
+      width: 100%;
+      min-width: 930px;
+      height: calc(100vh - 112px);
+      min-height: 540px;
+    }
+    .workspace-panel {
+      display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+      background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-soft);
+    }
+    .workspace-header {
+      flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 12px 13px; border-bottom: 1px solid var(--line); background: #fff;
+    }
+    .workspace-heading { min-width: 0; }
+    .section-title { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .065em; color: #657084; font-weight: 900; }
+    .section-context { margin-top: 3px; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .counter { flex: 0 0 auto; border-radius: 999px; background: #eef2f7; color: #40506a; padding: 4px 8px; font-size: 12px; font-weight: 850; }
+    .workspace-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 8px; background: var(--panel-soft); }
+    .entity-list { display: grid; gap: 7px; align-content: start; grid-auto-rows: max-content; }
+    .entity-card {
+      width: 100%; border: 1px solid var(--line); border-radius: 13px; padding: 11px; background: #fff; color: var(--ink); text-align: left;
+      box-shadow: 0 4px 12px rgba(29,43,68,.045); transition: .15s ease; position: relative; align-self: start;
+    }
+    .entity-card:hover { border-color: #bac5d5; box-shadow: 0 7px 18px rgba(29,43,68,.075); transform: translateY(-1px); }
+    .entity-card.is-selected { border-color: #8fa3ff; box-shadow: 0 0 0 2px rgba(49,87,255,.10), 0 8px 20px rgba(29,43,68,.09); background: #fbfcff; }
+    .entity-card.is-selected::before { content: ""; position: absolute; left: -1px; top: 10px; bottom: 10px; width: 3px; border-radius: 0 4px 4px 0; background: var(--blue); }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 9px; }
+    .card-main { min-width: 0; }
+    .app-title, .request-title { margin: 0; font-size: 14px; font-weight: 900; letter-spacing: -.01em; line-height: 1.25; }
+    .app-editor, .card-subtitle { margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 650; }
+    .pill, .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 7px; background: #f1f4f8; color: #40506a; font-size: 10px; font-weight: 850; white-space: nowrap; border: 1px solid transparent; }
+    .prio-p0 { background: #fff1f1; color: #b42318; border-color: #ffd7d7; }
+    .prio-p1 { background: #fff7df; color: #b54708; border-color: #ffe6a5; }
+    .prio-p2 { background: #edf4ff; color: #175cd3; border-color: #cfe1ff; }
+    .prio-p3, .prio-p4 { background: #f1f4f8; color: #40506a; border-color: #dce3ed; }
+    .status--ok { background: #ecfdf3; color: #067647; }
+    .status--warn { background: #fff7df; color: #9a5400; }
+    .status--todo { background: #fff1f1; color: #b42318; }
+    .status--neutral { background: #f1f4f8; color: #40506a; }
+    .mini-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 9px; }
+    .mini-metric { border: 1px solid #e5eaf2; background: #f8fafc; border-radius: 9px; padding: 6px 7px; }
+    .mini-label { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .045em; font-weight: 850; }
+    .mini-value { display: block; margin-top: 1px; font-size: 12px; font-weight: 900; }
+    .status-row, .flag-row, .reason-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .flag { border-radius: 9px; padding: 5px 7px; background: #f8fafc; border: 1px solid #e5eaf2; font-size: 10px; font-weight: 800; color: #40506a; }
+    .flag.is-bad { background: #fff1f1; color: #b42318; border-color: #ffd7d7; }
+    .flag.is-ok { background: #ecfdf3; color: #067647; border-color: #c8f3d9; }
+    .request-footer { margin-top: 8px; display: flex; justify-content: space-between; gap: 8px; align-items: center; color: var(--muted); font-size: 10px; font-weight: 750; }
 
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-    .request-panel{margin-bottom:12px}
-    .request-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-    .request-title{min-width:220px}
-    .panel-kicker{font-size:10.5px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-    .panel-name{margin-top:2px;font-size:20px;line-height:1.1;font-weight:850;letter-spacing:-.025em}
-    .panel-desc{margin-top:4px;font-size:12px;color:var(--muted)}
-    .request-controls{display:grid;grid-template-columns:minmax(180px,240px) minmax(130px,170px) auto;gap:8px;align-items:end}
-    .control-label{display:block;margin:0 0 5px 2px;font-size:10.5px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
-    select{width:100%;height:37px;padding:0 34px 0 10px;border:1px solid var(--line-strong);border-radius:10px;background:#fff;color:var(--ink);outline:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#667085 50%),linear-gradient(135deg,#667085 50%,transparent 50%);background-position:calc(100% - 16px) 15px,calc(100% - 11px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
-    select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(49,87,255,.11)}
-    .request-filter-state{padding:8px 14px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .filter-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#2d49c6;border:1px solid #d1dcff;font-size:11.5px;font-weight:750}
-    .filter-pill button{border:0;background:transparent;color:inherit;padding:0;font-weight:900}
-    .request-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:8px;max-height:232px;overflow:auto;padding:10px 12px 13px}
-    .request-item{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 11px;text-align:left;transition:.15s ease;min-width:0}
-    .request-item:hover{border-color:#afbdd0;box-shadow:var(--shadow-soft)}
-    .request-item.active{border-color:#7890ff;box-shadow:0 0 0 2px rgba(49,87,255,.12);background:#fbfcff}
-    .request-item-title{font-weight:850;font-size:13.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .request-item-sub{margin-top:3px;color:var(--muted);font-size:11.5px;font-weight:650;display:flex;justify-content:space-between;gap:8px}
-    .mini-statuses{display:grid;gap:5px;margin-top:8px}
-    .mini-status{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 7px;border-radius:9px;background:#f6f8fb;border:1px solid #e7ecf3;font-size:10.8px}
-    .mini-status-label{color:var(--muted);font-weight:750}
-    .mini-status-value{font-weight:800;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .status-good{color:var(--green)}
-    .status-warn{color:#9d5b05}
-    .status-bad{color:var(--red)}
-    .priority-pill{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10.8px;font-weight:850;white-space:nowrap}
-    .prio-p0,.prio-p1{background:var(--red-soft);color:#b42318}
-    .prio-p2{background:var(--orange-soft);color:#a85800}
-    .prio-p3{background:#eef3ff;color:#2952d7}
-    .prio-p4,.prio-default{background:#eff2f6;color:#566273}
-    .empty-compact{grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);border:1px dashed #d6deea;border-radius:14px;background:#fafbfd}
+    .entity-card.is-qualification {
+      background: #faf7ff;
+      border-color: #d9c9ff;
+      box-shadow: 0 4px 12px rgba(113, 67, 190, .07);
+    }
+    .entity-card.is-qualification:hover { border-color: #b89bea; box-shadow: 0 7px 18px rgba(113,67,190,.12); }
+    .entity-card.is-qualification.is-selected { border-color: #9a72db; background: #f8f3ff; box-shadow: 0 0 0 2px rgba(123,82,190,.12), 0 8px 20px rgba(61,38,99,.09); }
+    .entity-card.is-qualification.is-selected::before { background: #8b5bc6; }
+    .qualification-pill { background: #eee4ff; color: #6941a5; border-color: #dbc7ff; }
+    .qualification-summary { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+    .qualification-summary .flag { background: #f5efff; color: #674399; border-color: #e1d2fb; }
+    .qualification-detail-list { display: grid; gap: 8px; }
+    .qualification-detail-card { border: 1px solid #dfd2f5; border-left: 3px solid #8b5bc6; border-radius: 12px; background: #fff; padding: 11px; }
+    .qualification-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .qualification-detail-title { font-size: 13px; font-weight: 900; color: #372a4c; }
+    .qualification-detail-meta { margin-top: 6px; color: var(--muted); font-size: 10.5px; line-height: 1.45; white-space: pre-wrap; }
+    .qual-status--valid { background: #ecfdf3; color: #067647; }
+    .qual-status--progress { background: #fff7df; color: #9a5400; }
+    .qual-status--not-valid { background: #f1f4f8; color: #40506a; }
 
-    .layout{display:grid;grid-template-columns:minmax(650px,1.45fr) minmax(340px,.95fr);gap:12px;align-items:start}
-    .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 11px;border-bottom:1px solid var(--line)}
-    .legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:2px}
-    .legend-item{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:650;color:var(--muted)}
-    .legend-dot{width:9px;height:9px;border-radius:50%}
-
-    .diagram-scroll{overflow:auto;padding:12px 12px 14px;background:linear-gradient(180deg,#fbfcfe,#f7f9fc)}
-    .diagram-shell{width:1040px;height:920px;transform-origin:top left;position:relative}
-    #processSvg{display:block;width:1040px;height:920px;overflow:visible}
-    .connector{fill:none;stroke:#9eacc0;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .decision-shape{fill:#fff;stroke:#becbdb;stroke-width:2}
-    .decision-text{font-size:11px;font-weight:800;fill:#6c788a}
-    .process-node{cursor:pointer;outline:none}
-    .process-node .hit{fill:transparent;stroke:transparent;stroke-width:1}
-    .process-node .selected-bg{fill:#f8fafc;stroke:transparent;rx:14;ry:14}
-    .process-node:hover .selected-bg{fill:rgba(49,87,255,.045);stroke:rgba(49,87,255,.12)}
-    .process-node.filter-active .selected-bg{fill:#f0f3ff;stroke:#9fb0ff;stroke-width:1.2}
-    .process-node.selected-qualification .selected-bg{fill:var(--blue-soft);stroke:var(--blue);stroke-width:2}
-    .process-node.selected-flux .selected-bg{fill:var(--teal-soft);stroke:var(--teal);stroke-width:2}
-    .process-node.selected-both .selected-bg{fill:#eef2ff;stroke:#3157ff;stroke-width:2.4;stroke-dasharray:6 3}
-    .process-node.empty{opacity:.48}
-    .node-label{font-size:14px;font-weight:780;fill:#344054;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round}
-    .node-count{font-size:25px;font-weight:850;fill:#162033;letter-spacing:-.04em;paint-order:stroke;stroke:#fff;stroke-width:6px}
-    .node-meta{font-size:10.5px;font-weight:700;fill:#8290a3;paint-order:stroke;stroke:#fff;stroke-width:5px}
-
-    .details-head{padding:14px 16px 12px;border-bottom:1px solid var(--line)}
-    .details-title{font-size:20px;line-height:1.15;font-weight:850;letter-spacing:-.02em}
-    .details-sub{margin-top:4px;color:var(--muted);font-size:12px}
-    .details-list{max-height:820px;overflow:auto;padding:11px 13px 15px}
-    .empty-state{padding:28px 18px;text-align:center;border:1px dashed #d5deeb;border-radius:15px;background:#fafbfd;color:var(--muted)}
-    .detail-section{border:1px solid var(--line);border-radius:15px;background:#fff;padding:12px;margin-bottom:10px}
-    .detail-section-title{font-size:10.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-    .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    .detail-cell{padding:8px 9px;border:1px solid #e5ebf3;border-radius:11px;background:#f8fafc;min-width:0}
-    .detail-label{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em}
-    .detail-value{margin-top:3px;font-size:12px;font-weight:750;word-break:break-word}
-    .chips{display:flex;flex-wrap:wrap;gap:7px}
-    .chip{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#f4f7fb;border:1px solid #e2e8f1;color:#465366;font-size:11.5px;font-weight:700}
-    .chip.good{background:var(--green-soft);border-color:#cae9da;color:#126e4d}
-    .chip.warn{background:var(--orange-soft);border-color:#f5ddbc;color:#995800}
-    .chip.qual{background:var(--blue-soft);border-color:#cbd7ff;color:#2947cb}
-    .chip.flux{background:var(--teal-soft);border-color:#c7e9e1;color:#0e6d5c}
-    .comment{margin-top:8px;padding:9px 10px;border-radius:11px;background:#f7f9fc;border:1px solid #e4eaf2;color:#536176;font-size:11.5px;white-space:pre-wrap}
-    .flux-row{padding:9px 10px;border:1px solid #e3e9f1;border-radius:12px;background:#f9fbfd;margin-top:7px}
-    .flux-row-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-    .flux-resource{font-size:12px;font-weight:800;word-break:break-word}
-    .flux-status{font-size:10.8px;font-weight:800;color:#465366;white-space:nowrap}
-    .technical-error{margin:10px 12px 0;padding:10px 12px;border:1px solid #f0c8c5;border-radius:12px;background:#fff1f0;color:#a22b25;font-size:12px}
-
-    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:18px;z-index:100}
-    .modal-backdrop.hidden{display:none}
-    .modal{width:min(720px,96vw);background:#fff;border-radius:20px;box-shadow:0 24px 70px rgba(15,23,42,.25);padding:18px}
-    .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-    .modal-title{font-size:20px;font-weight:850}
-    .config-grid{display:grid;grid-template-columns:1fr;gap:10px}
-    .config-row label{display:block;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
-    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
-
-    @media(max-width:1250px){.layout{grid-template-columns:1fr}.details-list{max-height:none}.request-controls{grid-template-columns:1fr 1fr auto}}
-    @media(max-width:760px){.topbar{flex-direction:column}.request-controls{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}.app{padding:10px}h1{font-size:23px}}
+    .detail-empty { color: var(--muted); padding: 34px 20px; text-align: center; line-height: 1.5; }
+    .request-overview { border: 1px solid var(--line); border-radius: 13px; background: #fff; padding: 12px; margin-bottom: 8px; }
+    .overview-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .overview-title h3 { margin: 0; font-size: 15px; line-height: 1.25; }
+    .overview-sub { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .overview-actions { margin-top: 10px; display: flex; justify-content: flex-end; }
+    .progress-block { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px; margin-bottom: 8px; }
+    .progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11px; font-weight: 850; color: #4b5568; }
+    .progress-track { height: 6px; margin-top: 7px; border-radius: 999px; background: #e8edf4; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--green); border-radius: inherit; }
+    .flux-list { display: grid; gap: 7px; }
+    .flux-card { border: 1px solid #e3e8f0; border-radius: 12px; background: #fff; padding: 10px; }
+    .flux-card.is-open { border-left: 3px solid #f0a43a; }
+    .flux-card.is-done { border-left: 3px solid #45a879; }
+    .flux-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .flux-address { font-weight: 850; font-size: 12px; overflow-wrap: anywhere; }
+    .flux-meta { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .flux-alert { border-radius: 11px; padding: 11px; font-size: 11px; font-weight: 800; line-height: 1.45; }
+    .flux-alert--neutral { background: #f4f6f9; border: 1px solid #dde4ed; color: #526176; }
+    .flux-alert--info { background: #eef4ff; border: 1px solid #cfddff; color: #244c9a; margin-top: 7px; }
+    .toast { position: fixed; right: 16px; bottom: 16px; background: #162033; color: white; padding: 10px 12px; border-radius: 12px; font-weight: 800; font-size: 12px; box-shadow: var(--shadow); z-index: 1000; }
+    .hidden { display: none !important; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(18,27,43,.42); z-index: 90; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .editor-modal { width: min(920px, 96vw); max-height: 92vh; background: #fff; border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
+    .editor-header { padding: 15px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .editor-header h2 { margin: 0; font-size: 18px; }
+    .editor-body { padding: 16px; overflow-y: auto; }
+    .editor-footer { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: block; }
+    .field label { display: block; color: #4b5568; font-size: 10px; font-weight: 850; margin: 0 0 5px 2px; text-transform: uppercase; letter-spacing: .045em; }
+    .field.span-2 { grid-column: span 2; }
+    .muted { color: var(--muted); }
+    .config-panel { margin: 10px 0; border: 1px solid var(--line); background: #fff; border-radius: var(--radius); padding: 13px; box-shadow: var(--shadow-soft); }
+    .config-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    @media (max-width: 1180px) {
+      .panel-actions { flex-wrap: wrap; }
+      .panel-sort { width: 150px; }
+    }
+    @media (max-width: 850px) {
+      .config-grid, .form-grid { grid-template-columns: 1fr 1fr; }
+      .workspace { height: calc(100vh - 132px); }
+    }
+    @media (max-width: 620px) {
+      .app-shell { padding: 10px; }
+      .config-grid, .form-grid { grid-template-columns: 1fr; }
+      .filter-grid { grid-template-columns: 1fr; }
+      .filter-grid .filter-reset { grid-column: auto; }
+      .panel-actions { width: 100%; justify-content: flex-start; }
+      .panel-sort { flex: 1 1 150px; width: auto; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .editor-modal { width: 100%; }
+    }
   </style>
 </head>
 <body>
-<div class="app">
-  <div class="topbar">
-    <div>
-      <h1>Dashboard Applications — Processus</h1>
-      <div class="subtitle">Corrélation entre les demandes de <strong>B_Applications</strong>, la qualification et les travaux de flux.</div>
-    </div>
-    <div class="top-actions">
-      <button class="btn" id="configureBtn">Configurer</button>
-      <button class="btn" id="allBtn">Tout voir</button>
-      <button class="btn" id="zoomOutBtn">−</button>
-      <span class="zoom-chip" id="zoomChip">85%</span>
-      <button class="btn" id="zoomInBtn">+</button>
-      <button class="btn" id="refreshBtn">Rafraîchir</button>
-      <span class="refresh-state" id="refreshState">Connexion…</span>
-    </div>
-  </div>
-
-  <section class="card request-panel">
-    <div class="request-head">
-      <div class="request-title">
-        <div class="panel-kicker">Demandes applicatives</div>
-        <div class="panel-name">Suivi synthétique par service et application</div>
-        <div class="panel-desc">Sélectionnez une demande pour mettre en évidence sa position dans le processus.</div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <h1>Dashboard Applications</h1>
+        <span id="lastRefresh" class="last-refresh">Chargement…</span>
       </div>
-      <div class="request-controls">
-        <div>
-          <label class="control-label" for="serviceFilter">Service utilisateur</label>
-          <select id="serviceFilter"><option value="">Tous les services</option></select>
-        </div>
-        <div>
-          <label class="control-label" for="priorityFilter">Priorité</label>
-          <select id="priorityFilter"><option value="">Toutes les priorités</option></select>
-        </div>
-        <button class="btn" id="resetFiltersBtn">Réinitialiser</button>
+      <div class="top-actions">
+        <button id="refreshBtn" class="btn btn--ghost">Rafraîchir</button>
+        <button id="configBtn" class="btn btn--ghost">Configurer</button>
       </div>
-    </div>
-    <div class="request-filter-state" id="requestFilterState"></div>
-    <div class="request-list" id="requestList"><div class="empty-compact">Chargement des demandes…</div></div>
-  </section>
+    </header>
 
-  <div id="errorBanner"></div>
-
-  <div class="layout">
-    <section class="card">
-      <div class="panel-head">
-        <div>
-          <div class="panel-kicker">Processus global</div>
-          <div class="panel-name">Traitement des applications</div>
-          <div class="panel-desc">Les compteurs sont calculés par corrélation des trois tables. Cliquez sur une étape pour filtrer la liste.</div>
-        </div>
-        <div class="legend">
-          <span class="legend-item"><span class="legend-dot" style="background:#3157ff"></span>Qualification</span>
-          <span class="legend-item"><span class="legend-dot" style="background:#12806b"></span>Flux</span>
-          <span class="legend-item"><span class="legend-dot" style="background:#dbe3ef"></span>Sans activité</span>
-        </div>
+    <section id="configPanel" class="config-panel hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+        <h2 class="section-title">Configuration des tables</h2>
+        <button id="closeConfigBtn" class="btn btn--ghost">Fermer</button>
       </div>
-      <div class="diagram-scroll" id="diagramScroll">
-        <div class="diagram-shell" id="diagramShell">
-          <svg id="processSvg" viewBox="0 0 1040 920" role="img" aria-label="Processus de traitement des applications">
-            <defs>
-              <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
-                <path d="M0,0 L10,5 L0,10 Z" fill="#9eacc0"></path>
-              </marker>
-            </defs>
-
-            <path class="connector" marker-end="url(#arrowHead)" d="M430 110 V155" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M330 195 H120 V305" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M530 195 H635" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M430 235 V305" />
-            <path class="connector" d="M120 385 V420 H430" />
-            <path class="connector" d="M430 385 V420" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M430 420 V438" />
-            <polygon class="decision-shape" points="430,438 447,455 430,472 413,455" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M430 472 V495" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M430 580 V620" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M430 705 V738" />
-            <polygon class="decision-shape" points="430,738 447,755 430,772 413,755" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M413 755 H160 V815" />
-            <text class="decision-text" x="376" y="748">OK</text>
-            <path class="connector" marker-end="url(#arrowHead)" d="M447 755 H703" />
-            <text class="decision-text" x="478" y="748">KO</text>
-            <polygon class="decision-shape" points="720,738 737,755 720,772 703,755" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M737 755 H815" />
-            <path class="connector" marker-end="url(#arrowHead)" d="M720 772 V860 H815" />
-
-            <g class="process-node" data-node="apk" tabindex="0" transform="translate(330,30)">
-              <rect class="selected-bg" x="0" y="0" width="200" height="80" />
-              <rect class="hit" x="0" y="0" width="200" height="80" />
-              <text class="node-label" x="100" y="25" text-anchor="middle">Récupérer l'APK</text>
-              <text class="node-count" x="86" y="62" text-anchor="end">0</text><text class="node-meta" x="96" y="60" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="ssi" tabindex="0" transform="translate(330,155)">
-              <rect class="selected-bg" x="0" y="0" width="200" height="80" />
-              <rect class="hit" x="0" y="0" width="200" height="80" />
-              <text class="node-label" x="100" y="25" text-anchor="middle">Qualification SSI</text>
-              <text class="node-count" x="86" y="62" text-anchor="end">0</text><text class="node-meta" x="96" y="60" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="conformite" tabindex="0" transform="translate(635,155)">
-              <rect class="selected-bg" x="0" y="0" width="250" height="98" />
-              <rect class="hit" x="0" y="0" width="250" height="98" />
-              <text class="node-label" x="125" y="20" text-anchor="middle">Demande de mise en</text>
-              <text class="node-label" x="125" y="39" text-anchor="middle">conformité auprès de l'éditeur</text>
-              <text class="node-count" x="111" y="78" text-anchor="end">0</text><text class="node-meta" x="121" y="76" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="jira" tabindex="0" transform="translate(20,305)">
-              <rect class="selected-bg" x="0" y="0" width="200" height="80" />
-              <rect class="hit" x="0" y="0" width="200" height="80" />
-              <text class="node-label" x="100" y="23" text-anchor="middle">Traitement demande</text>
-              <text class="node-label" x="100" y="42" text-anchor="middle">JIRA</text>
-              <text class="node-count" x="86" y="70" text-anchor="end">0</text><text class="node-meta" x="96" y="68" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="pfai" tabindex="0" transform="translate(330,305)">
-              <rect class="selected-bg" x="0" y="0" width="200" height="80" />
-              <rect class="hit" x="0" y="0" width="200" height="80" />
-              <text class="node-label" x="100" y="23" text-anchor="middle">Traitement demande</text>
-              <text class="node-label" x="100" y="42" text-anchor="middle">PFAI</text>
-              <text class="node-count" x="86" y="70" text-anchor="end">0</text><text class="node-meta" x="96" y="68" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="specifique" tabindex="0" transform="translate(320,495)">
-              <rect class="selected-bg" x="0" y="0" width="220" height="85" />
-              <rect class="hit" x="0" y="0" width="220" height="85" />
-              <text class="node-label" x="110" y="24" text-anchor="middle">Traitement spécifique</text>
-              <text class="node-label" x="110" y="43" text-anchor="middle">supplémentaire</text>
-              <text class="node-count" x="96" y="73" text-anchor="end">0</text><text class="node-meta" x="106" y="71" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="fonctionnelle" tabindex="0" transform="translate(330,620)">
-              <rect class="selected-bg" x="0" y="0" width="200" height="85" />
-              <rect class="hit" x="0" y="0" width="200" height="85" />
-              <text class="node-label" x="100" y="24" text-anchor="middle">Qualification</text>
-              <text class="node-label" x="100" y="43" text-anchor="middle">fonctionnelle</text>
-              <text class="node-count" x="86" y="73" text-anchor="end">0</text><text class="node-meta" x="96" y="71" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="deploiement" tabindex="0" transform="translate(50,815)">
-              <rect class="selected-bg" x="0" y="0" width="220" height="78" />
-              <rect class="hit" x="0" y="0" width="220" height="78" />
-              <text class="node-label" x="110" y="24" text-anchor="middle">Déploiement et tests CU</text>
-              <text class="node-count" x="96" y="61" text-anchor="end">0</text><text class="node-meta" x="106" y="59" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="n3" tabindex="0" transform="translate(815,715)">
-              <rect class="selected-bg" x="0" y="0" width="180" height="78" />
-              <rect class="hit" x="0" y="0" width="180" height="78" />
-              <text class="node-label" x="90" y="24" text-anchor="middle">Support N3 ACMOSS</text>
-              <text class="node-count" x="76" y="61" text-anchor="end">0</text><text class="node-meta" x="86" y="59" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-
-            <g class="process-node" data-node="editeur" tabindex="0" transform="translate(815,825)">
-              <rect class="selected-bg" x="0" y="0" width="180" height="78" />
-              <rect class="hit" x="0" y="0" width="180" height="78" />
-              <text class="node-label" x="90" y="24" text-anchor="middle">Support Éditeur</text>
-              <text class="node-count" x="76" y="61" text-anchor="end">0</text><text class="node-meta" x="86" y="59" text-anchor="start">Q 0 · F 0 · 0 dem.</text>
-            </g>
-          </svg>
-        </div>
+      <div class="config-grid">
+        <div class="compact-filter"><select id="cfgApps"></select></div>
+        <div class="compact-filter"><select id="cfgFlux"></select></div>
+        <div class="compact-filter"><select id="cfgQual"></select></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+        <button id="saveConfigBtn" class="btn btn--primary">Enregistrer</button>
       </div>
     </section>
 
-    <section class="card">
-      <div class="details-head">
-        <div class="panel-kicker">Détail de la demande</div>
-        <div class="details-title" id="detailsTitle">Sélectionnez une demande</div>
-        <div class="details-sub" id="detailsSub">Le détail de la qualification et des flux apparaîtra ici.</div>
-      </div>
-      <div class="details-list" id="detailsList">
-        <div class="empty-state">Cliquez sur une demande de la liste pour visualiser sa position dans le processus.</div>
-      </div>
+
+    <section id="kpiRow" class="kpi-row"></section>
+
+    <div class="workspace-scroll">
+      <main class="workspace">
+        <section class="workspace-panel">
+          <header class="workspace-header">
+            <div class="workspace-heading">
+              <div class="level-line"><span class="level-label">Niveau 1</span><h2 class="section-title">Applications</h2></div>
+              <div class="section-context">Vue consolidée par application</div>
+            </div>
+            <div class="panel-actions">
+              <button id="appFilterBtn" class="btn btn--ghost filter-btn" type="button">Filtrer<span id="appFilterCount" class="filter-count">0</span></button>
+              <button id="appSortBtn" class="btn btn--ghost sort-btn" type="button">Trier</button>
+              <span id="appCount" class="counter">0</span>
+            </div>
+          </header>
+          <div id="appFilterPanel" class="panel-filter-panel hidden">
+            <div class="filter-grid">
+              <select id="serviceFilter"><option value="">Tous les services</option></select>
+              <select id="workStatusFilter"><option value="">Travaux : tous</option></select>
+              <select id="qualificationFilter"><option value="">Qualification : toutes</option><option value="yes">Qualification requise</option><option value="no">Qualification non requise</option></select>
+              <select id="priorityFilter"><option value="">Toutes les priorités</option></select>
+              <select id="playstoreFilter"><option value="">Playstore : tous</option></select>
+              <button id="resetFiltersBtn" class="btn btn--ghost filter-reset" type="button">Réinitialiser les filtres</button>
+            </div>
+          </div>
+          <div id="appSortPanel" class="panel-sort-panel hidden">
+            <div class="sort-grid">
+              <select id="sortSelect" aria-label="Trier les applications">
+                <option value="priority">Trier par priorité</option>
+                <option value="service">Trier par service</option>
+                <option value="flux">Trier par flux à ouvrir</option>
+                <option value="application">Trier par application</option>
+              </select>
+            </div>
+          </div>
+          <div id="appList" class="workspace-body entity-list"></div>
+        </section>
+
+        <section class="workspace-panel">
+          <header class="workspace-header">
+            <div class="workspace-heading">
+              <div class="level-line"><span class="level-label">Niveau 2</span><h2 class="section-title">Travaux</h2></div>
+              <div id="requestContext" class="section-context">Sélectionnez une application</div>
+            </div>
+            <span id="requestCount" class="counter">0</span>
+          </header>
+          <div id="requestList" class="workspace-body entity-list"></div>
+        </section>
+
+        <section class="workspace-panel">
+          <header class="workspace-header">
+            <div class="workspace-heading">
+              <div class="level-line"><span class="level-label">Niveau 3</span><h2 class="section-title">Détails</h2></div>
+              <div id="fluxContext" class="section-context">Sélectionnez un travail</div>
+            </div>
+            <span id="fluxCount" class="counter">0</span>
+          </header>
+          <div id="fluxBody" class="workspace-body"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="editorBackdrop" class="modal-backdrop hidden">
+    <section class="editor-modal">
+      <header class="editor-header">
+        <div><h2 id="editorTitle">Modifier la demande</h2><div id="editorSub" class="muted"></div></div>
+        <button id="closeEditorBtn" class="btn btn--ghost">Fermer</button>
+      </header>
+      <div id="editorBody" class="editor-body"></div>
+      <footer class="editor-footer"><div id="editorMeta" class="muted"></div><button id="saveEditorBtn" class="btn btn--primary">Enregistrer</button></footer>
     </section>
   </div>
-</div>
 
-<div class="modal-backdrop hidden" id="configBackdrop">
-  <div class="modal">
-    <div class="modal-head">
-      <div>
-        <div class="panel-kicker">Configuration</div>
-        <div class="modal-title">Associer les tables Grist</div>
-        <div class="panel-desc">Sélectionnez les identifiants techniques des trois tables.</div>
-      </div>
-      <button class="btn" id="closeConfigBtn">Fermer</button>
-    </div>
-    <div class="config-grid">
-      <div class="config-row">
-        <label for="configRequests">Demandes — B_Applications</label>
-        <select id="configRequests"></select>
-      </div>
-      <div class="config-row">
-        <label for="configQualification">Qualification — REF_Applications Qualifiées</label>
-        <select id="configQualification"></select>
-      </div>
-      <div class="config-row">
-        <label for="configFlux">Flux — REF_Flux Applications</label>
-        <select id="configFlux"></select>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn" id="cancelConfigBtn">Annuler</button>
-      <button class="btn btn-primary" id="saveConfigBtn">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(() => {
-  const PROCESS_NODES = [
-    {key:'apk',label:"Récupérer l'APK",aliases:["recuperer l apk","recuperer apk","recup apk","récupérer l apk","récupérer apk"]},
-    {key:'ssi',label:'Qualification SSI',aliases:['qualification ssi','ssi']},
-    {key:'conformite',label:"Demande de mise en conformité auprès de l'éditeur",aliases:['demande de mise en conformite aupres de l editeur','mise en conformite','conformite editeur','demande conformite editeur']},
-    {key:'jira',label:'Traitement demande JIRA',aliases:['traitement demande jira','demande jira','jira']},
-    {key:'pfai',label:'Traitement demande PFAI',aliases:['traitement demande pfai','demande pfai','pfai']},
-    {key:'specifique',label:'Traitement spécifique supplémentaire',aliases:['traitement specifique supplementaire','specifique supplementaire','traitement spécifique supplémentaire','spécifique supplémentaire']},
-    {key:'fonctionnelle',label:'Qualification fonctionnelle',aliases:['qualification fonctionnelle','fonctionnelle']},
-    {key:'deploiement',label:'Déploiement et tests CU',aliases:['deploiement et tests cu','deploiement tests cu','tests cu','déploiement et tests cu','deploiement cu']},
-    {key:'n3',label:'Support N3 ACMOSS',aliases:['support n3 acmoss','n3 acmoss','support acmoss']},
-    {key:'editeur',label:'Support Éditeur',aliases:['support editeur','support éditeur','editeur','éditeur']}
-  ];
-
-  const TABLE_DEFS = {
-    requests: {
-      label:'B_Applications',
-      candidates:['B_Applications','B Applications','B_APPL','Applications'],
-      fields:{
-        service:['service utilisateur','service demandeur'],
-        app:["nom de l application","nom de l'application",'application','nom application'],
-        priority:['priorite dud','priorité dud','priorite','priorité'],
-        editor:['editeur','éditeur'],
-        playstore:['playstore'],
-        paid:['application payante','payante'],
-        device:["dispositif d acces","dispositif d'accès",'dispositifs'],
-        vector:["vecteur d acces","vecteur d'accès",'vecteur'],
-        privateAccess:['acces a des ressources privees','accès à des ressources privées','ressources privees','ressources privées'],
-        version:["version de l application utilisee","version de l'application utilisée",'version']
-      }
-    },
-    qualification: {
-      label:'REF_Applications Qualifiées',
-      candidates:['REF_Applications_Qualifiees','REF_Applications Qualifiees','REF_Applications_Qualifiées','Applications_Qualifiees','Applications Qualifiées'],
-      fields:{
-        app:["nom de l application","nom de l'application",'application','nom application'],
-        type:['type'],
-        version:['version qualifiee','version qualifiée','version'],
-        editor:['editeur','éditeur'],
-        ssi:['qualification ssi','statut ssi'],
-        functional:['qualification fonctionnelle','statut fonctionnel','statut fonctionnelle'],
-        commentFunctional:['commentaire fonctionnelle','commentaire fonctionnel'],
-        commentSSI:['commentaire ssi']
-      }
-    },
-    flux: {
-      label:'REF_Flux Applications',
-      candidates:['REF_Flux_Applications','REF_Flux Applications','RRF_Flux_Applications','RRF_Flux Applications','Flux_Apps','Flux Applications','REF_Flux_Apps'],
-      fields:{
-        service:['service demandeur','service utilisateur','service'],
-        app:["nom de l application","nom de l'application",'application','nom application'],
-        version:["version de l application","version de l'application",'version'],
-        resource:['adresse des ressources','adresse ressource','ressource'],
-        resourceDescription:['description des ressources','description ressource'],
-        protocols:['protocoles','protocole'],
-        exposure:["type d exposition","type d'exposition"],
-        services:['services necessaires','services nécessaires'],
-        comments:['commentaires','commentaire'],
-        status:['statut flux','statut']
-      }
-    }
-  };
-
-  const FINAL_STATUSES = ['valide','validee','qualifie','qualifiee','termine','terminee','traite','traitee','deploye','deployee','accepte','complete','complet','ok'];
-
-  const state = {
-    options:{tableIds:{}},
-    tableIds:[],
-    metadataByTable:new Map(),
-    metadataById:new Map(),
-    refCatalogs:new Map(),
-    tables:{},
-    requests:[],
-    selectedRequestId:null,
-    nodeFilter:null,
-    serviceFilter:'',
-    priorityFilter:'',
-    zoom:.85,
-    loading:false,
-    optionsReceived:false
-  };
-
-  const $ = (id) => document.getElementById(id);
-  const dom = {
-    configureBtn:$('configureBtn'),allBtn:$('allBtn'),zoomOutBtn:$('zoomOutBtn'),zoomInBtn:$('zoomInBtn'),zoomChip:$('zoomChip'),
-    refreshBtn:$('refreshBtn'),refreshState:$('refreshState'),diagramShell:$('diagramShell'),diagramScroll:$('diagramScroll'),
-    serviceFilter:$('serviceFilter'),priorityFilter:$('priorityFilter'),resetFiltersBtn:$('resetFiltersBtn'),requestList:$('requestList'),requestFilterState:$('requestFilterState'),
-    detailsTitle:$('detailsTitle'),detailsSub:$('detailsSub'),detailsList:$('detailsList'),errorBanner:$('errorBanner'),
-    configBackdrop:$('configBackdrop'),configRequests:$('configRequests'),configQualification:$('configQualification'),configFlux:$('configFlux'),
-    closeConfigBtn:$('closeConfigBtn'),cancelConfigBtn:$('cancelConfigBtn'),saveConfigBtn:$('saveConfigBtn')
-  };
-
-  const text = (v) => v == null ? '' : String(v).trim();
-  const norm = (v) => text(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ').replace(/[_\-]+/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-  const esc = (v) => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const unique = (arr) => Array.from(new Set(arr.filter(Boolean)));
-  const requestKey = (service, app) => `${norm(service)}||${norm(app)}`;
-  const isYes = (v) => ['oui','yes','true','1'].includes(norm(v)) || norm(v).startsWith('oui ');
-  const isFinal = (v) => FINAL_STATUSES.includes(norm(v));
-
-  function rowsFrom(raw){
-    if(!raw) return [];
-    if(Array.isArray(raw)) return raw;
-    if(Array.isArray(raw.id)) return raw.id.map((id,i)=>{const r={id};Object.keys(raw).forEach(k=>r[k]=raw[k][i]);return r;});
-    return [];
-  }
-  function listValues(v){
-    if(Array.isArray(v)) return v[0]==='L' ? v.slice(1) : v;
-    return v == null || v === '' ? [] : [v];
-  }
-  function refTarget(type){
-    const m=/^(?:Ref|RefList):(.+)$/.exec(type||'');
-    return m ? m[1] : '';
-  }
-  function priorityRank(v){
-    const n=norm(v);
-    for(let i=0;i<=9;i++) if(new RegExp(`p\\s*${i}(?:\\b|$)`).test(n)) return i;
-    return 99;
-  }
-  function priorityClass(v){
-    const r=priorityRank(v);
-    return r===0?'prio-p0':r===1?'prio-p1':r===2?'prio-p2':r===3?'prio-p3':r===4?'prio-p4':'prio-default';
-  }
-  function formatPriority(v){return text(v)||'Sans priorité';}
-  function nodeForStatus(status){
-    const n=norm(status);
-    if(!n || isFinal(status)) return null;
-    return PROCESS_NODES.find(node=>node.aliases.some(alias=>{
-      const a=norm(alias);
-      return n===a || n.includes(a) || a.includes(n);
-    })) || null;
-  }
-
-  async function safeFetchTable(tableId){
-    if(!tableId) throw new Error('Identifiant de table vide');
-    return grist.docApi.fetchTable(tableId);
-  }
-
-  async function loadMetadata(){
-    state.metadataByTable=new Map();
-    state.metadataById=new Map();
-    try{
-      const [tablesRaw,columnsRaw]=await Promise.all([safeFetchTable('_grist_Tables'),safeFetchTable('_grist_Tables_column')]);
-      const tables=rowsFrom(tablesRaw), columns=rowsFrom(columnsRaw);
-      const tableByMetaId=new Map(tables.map(row=>[Number(row.id),row.tableId]));
-      columns.forEach(row=>{
-        const tableId=tableByMetaId.get(Number(row.parentId));
-        if(!tableId) return;
-        const meta={
-          id:Number(row.id),tableId,colId:row.colId,label:row.label||row.colId,type:row.type||'Any',
-          visibleCol:Number(row.visibleCol||0),displayCol:Number(row.displayCol||0)
-        };
-        state.metadataById.set(meta.id,meta);
-        if(!state.metadataByTable.has(tableId)) state.metadataByTable.set(tableId,new Map());
-        state.metadataByTable.get(tableId).set(meta.colId,meta);
-      });
-      state.metadataById.forEach(meta=>{
-        meta.refTableId=refTarget(meta.type);
-        const visible=state.metadataById.get(meta.visibleCol);
-        const display=state.metadataById.get(meta.displayCol);
-        meta.visibleColId=visible?.colId||'';
-        meta.displayColId=display?.colId||'';
-      });
-    }catch(error){
-      console.warn('Métadonnées Grist indisponibles',error);
-    }
-  }
-
-  function resolveColumn(raw,tableId,aliases){
-    const keys=Object.keys(raw||{}).filter(k=>k!=='id');
-    const metaMap=state.metadataByTable.get(tableId)||new Map();
-    const candidates=keys.map(key=>({key,keyNorm:norm(key),labelNorm:norm(metaMap.get(key)?.label||key)}));
-    const targets=aliases.map(norm);
-    for(const target of targets){
-      const exact=candidates.find(c=>c.keyNorm===target||c.labelNorm===target);
-      if(exact) return exact.key;
-    }
-    for(const target of targets){
-      const partial=candidates.find(c=>c.keyNorm.includes(target)||c.labelNorm.includes(target)||target.includes(c.keyNorm)||target.includes(c.labelNorm));
-      if(partial) return partial.key;
-    }
-    return '';
-  }
-
-  function chooseDisplayColumn(tableId,raw,sourceMetas){
-    const keys=Object.keys(raw||{}).filter(k=>k!=='id');
-    for(const sourceMeta of sourceMetas){
-      if(sourceMeta?.visibleColId && keys.includes(sourceMeta.visibleColId)) return sourceMeta.visibleColId;
-      if(sourceMeta?.displayColId && keys.includes(sourceMeta.displayColId)) return sourceMeta.displayColId;
-    }
-    const targetMeta=state.metadataByTable.get(tableId)||new Map();
-    const preferred=['nom','nom long','libelle','libellé','valeur','statut','titre','name','label','code'];
-    for(const p of preferred){
-      const key=keys.find(k=>norm(k)===norm(p)||norm(targetMeta.get(k)?.label)===norm(p));
-      if(key) return key;
-    }
-    return keys[0]||'';
-  }
-
-  async function buildReferenceCatalogs(){
-    state.refCatalogs=new Map();
-    const refs=new Map();
-    Object.values(state.tables).forEach(table=>{
-      Object.values(table.columns||{}).forEach(colId=>{
-        const meta=table.meta?.get(colId);
-        if(meta?.refTableId){
-          if(!refs.has(meta.refTableId)) refs.set(meta.refTableId,[]);
-          refs.get(meta.refTableId).push(meta);
-        }
-      });
-    });
-    await Promise.all([...refs.entries()].map(async([tableId,sourceMetas])=>{
-      try{
-        const raw=await safeFetchTable(tableId);
-        const rows=rowsFrom(raw);
-        const displayCol=chooseDisplayColumn(tableId,raw,sourceMetas);
-        const items=rows.map(row=>({id:Number(row.id),label:text(row[displayCol])||`#${row.id}`,row})).filter(x=>x.id);
-        state.refCatalogs.set(tableId,{displayCol,items,byId:new Map(items.map(x=>[x.id,x]))});
-      }catch(error){
-        console.warn('Référentiel non chargé',tableId,error);
-      }
-    }));
-  }
-
-  function displayRaw(raw,meta){
-    if(raw===null||raw===undefined||raw==='') return '';
-    const type=meta?.type||'Any';
-    const target=refTarget(type);
-    if(target){
-      const catalog=state.refCatalogs.get(target);
-      const resolveOne=(value)=>{
-        if(value===null||value===undefined||value===''||value===0||value==='0') return '';
-        return catalog?.byId.get(Number(value))?.label || text(value);
-      };
-      if(type.startsWith('RefList:')) return listValues(raw).map(resolveOne).filter(Boolean).join(', ');
-      return resolveOne(raw);
-    }
-    if(type==='ChoiceList') return listValues(raw).map(text).filter(Boolean).join(', ');
-    return text(raw);
-  }
-
-  function fieldDisplay(table,row,field){
-    const colId=table.columns[field];
-    if(!colId) return '';
-    return displayRaw(row[colId],table.meta?.get(colId));
-  }
-
-  async function listTables(){
-    try{
-      const ids=await grist.docApi.listTables();
-      state.tableIds=Array.isArray(ids)?ids:[];
-    }catch(error){
-      state.tableIds=[];
-      console.warn('listTables indisponible',error);
-    }
-  }
-
-  function findTableId(def,override){
-    if(override && state.tableIds.includes(override)) return override;
-    const byNorm=new Map(state.tableIds.map(id=>[norm(id),id]));
-    for(const candidate of def.candidates){
-      const exact=byNorm.get(norm(candidate));
-      if(exact) return exact;
-    }
-    const tokens=norm(def.label).split(' ').filter(Boolean);
-    return state.tableIds.find(id=>tokens.every(token=>norm(id).includes(token)))||'';
-  }
-
-  async function loadTable(key){
-    const def=TABLE_DEFS[key];
-    const tableId=findTableId(def,state.options.tableIds?.[key]);
-    if(!tableId) throw new Error(`Table « ${def.label} » introuvable.`);
-    const raw=await safeFetchTable(tableId);
-    const columns={};
-    Object.entries(def.fields).forEach(([field,aliases])=>columns[field]=resolveColumn(raw,tableId,aliases));
-    return {key,def,tableId,raw,rows:rowsFrom(raw),columns,meta:state.metadataByTable.get(tableId)||new Map()};
-  }
-
-  function summarizeStatuses(values,emptyLabel){
-    const vals=unique(values.map(text).filter(Boolean));
-    if(!vals.length) return emptyLabel;
-    if(vals.every(isFinal)) return 'Validé';
-    return vals.join(' / ');
-  }
-
-  function deriveQualification(request,qRows){
-    if(!qRows.length){
-      return {
-        required:true,created:false,complete:false,label:'Ligne à créer',
-        ssiStatus:'Non démarrée',functionalStatus:'Non démarrée',
-        commentSSI:'',commentFunctional:'',
-        activeNodes:new Map([['apk',new Set(['qualification'])]])
-      };
-    }
-    const table=state.tables.qualification;
-    const ssiValues=qRows.map(row=>fieldDisplay(table,row,'ssi')).filter(Boolean);
-    const functionalValues=qRows.map(row=>fieldDisplay(table,row,'functional')).filter(Boolean);
-    const commentSSI=unique(qRows.map(row=>fieldDisplay(table,row,'commentSSI')).filter(Boolean)).join('\n');
-    const commentFunctional=unique(qRows.map(row=>fieldDisplay(table,row,'commentFunctional')).filter(Boolean)).join('\n');
-    const ssiComplete=ssiValues.length>0 && ssiValues.every(isFinal);
-    const functionalComplete=functionalValues.length>0 && functionalValues.every(isFinal);
-    const complete=ssiComplete && functionalComplete;
-    const activeNodes=new Map();
-    const add=(key)=>{if(!key)return;if(!activeNodes.has(key))activeNodes.set(key,new Set());activeNodes.get(key).add('qualification');};
-    if(!complete){
-      ssiValues.filter(v=>!isFinal(v)).forEach(v=>add(nodeForStatus(v)?.key||'ssi'));
-      functionalValues.filter(v=>!isFinal(v)).forEach(v=>add(nodeForStatus(v)?.key||'fonctionnelle'));
-      if(!ssiValues.length && !functionalValues.length) add('apk');
-      else{
-        if(!ssiValues.length && !ssiComplete) add('ssi');
-        if(!functionalValues.length && !functionalComplete) add('fonctionnelle');
-      }
-    }
-    return {
-      required:!complete,created:true,complete,
-      label:complete?'Qualifiée':`SSI : ${summarizeStatuses(ssiValues,'À démarrer')} · Fonctionnelle : ${summarizeStatuses(functionalValues,'À démarrer')}`,
-      ssiStatus:summarizeStatuses(ssiValues,'À démarrer'),
-      functionalStatus:summarizeStatuses(functionalValues,'À démarrer'),
-      commentSSI,commentFunctional,activeNodes
+  <div id="toast" class="toast hidden"></div>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <script>
+  (() => {
+    const VERSION = "4.0";
+    const TERMINAL_STATUSES = ["traite", "traité", "termine", "terminé", "deployer", "déployé", "deployee", "déployée", "deploye", "ouvert", "configuration deploye", "configuration déployé", "abandonne", "abandonné", "clos", "clôturé"];
+    const TABLE_DEFS = {
+      apps: { label: "B_Applications", candidates: ["B_Applications", "B_Applications_2", "Referentiel_B_Applications"], fuzzy: ["applications"] },
+      flux: { label: "REF_Flux Applications", candidates: ["REF_Flux_Applications", "REF_Flux Applications", "RRF_Flux_Applications", "RRF_Flux Applications", "RRF_Flux_Apps", "Flux_Apps", "B_Flux_Apps", "Flux_Applications", "Referentiel_Flux_Apps"], fuzzy: ["flux", "app"] },
+      qual: { label: "REF_Applications_Qualifiees", candidates: ["REF_Applications_Qualifiees", "REF_Applications_Qualifiées", "Applications_Qualifiees", "Applications_Qualifiées", "Referentiel_REF_Applications_Qualifiees"], fuzzy: ["applications", "qual"] }
     };
-  }
-
-  function needsFlux(request){
-    return isYes(request.privateAccess) || /\brie\b/.test(norm(request.vector));
-  }
-
-  function deriveFlux(request,fluxRows){
-    const required=needsFlux(request);
-    if(!required){
-      return {required:false,created:false,complete:true,label:'N.A.',statuses:[],activeNodes:new Map(),rows:[]};
-    }
-    if(!fluxRows.length){
-      return {required:true,created:false,complete:false,label:'Ligne(s) à créer',statuses:[],activeNodes:new Map(),rows:[]};
-    }
-    const table=state.tables.flux;
-    const statuses=fluxRows.map(row=>fieldDisplay(table,row,'status')).filter(Boolean);
-    const complete=statuses.length>0 && statuses.every(isFinal);
-    const activeNodes=new Map();
-    const add=(key)=>{if(!key)return;if(!activeNodes.has(key))activeNodes.set(key,new Set());activeNodes.get(key).add('flux');};
-    statuses.filter(v=>!isFinal(v)).forEach(v=>{
-      const node=nodeForStatus(v);
-      if(node && !['ssi','fonctionnelle'].includes(node.key)) add(node.key);
-    });
-    const uniq=unique(statuses);
-    let label='';
-    if(complete) label='Traité';
-    else if(!uniq.length) label='Sans statut';
-    else if(uniq.length===1) label=uniq[0];
-    else label=`${fluxRows.length} flux · ${uniq.join(' / ')}`;
-    return {required:true,created:true,complete,label,statuses:uniq,activeNodes,rows:fluxRows};
-  }
-
-  function mergeActiveNodes(qualification,flux){
-    const result=new Map();
-    const addFrom=(map)=>{
-      map.forEach((sources,key)=>{
-        if(!result.has(key)) result.set(key,new Set());
-        sources.forEach(source=>result.get(key).add(source));
-      });
-    };
-    addFrom(qualification.activeNodes);
-    addFrom(flux.activeNodes);
-    return result;
-  }
-
-  function normalizeTables(){
-    const requestTable=state.tables.requests;
-    const qualificationTable=state.tables.qualification;
-    const fluxTable=state.tables.flux;
-
-    const qualificationRows=qualificationTable.rows.map(row=>({
-      row,
-      app:fieldDisplay(qualificationTable,row,'app')
-    })).filter(x=>x.app);
-    const qualificationByApp=new Map();
-    qualificationRows.forEach(item=>{
-      const key=norm(item.app);
-      if(!qualificationByApp.has(key)) qualificationByApp.set(key,[]);
-      qualificationByApp.get(key).push(item.row);
-    });
-
-    const fluxRows=fluxTable.rows.map(row=>({
-      row,
-      service:fieldDisplay(fluxTable,row,'service'),
-      app:fieldDisplay(fluxTable,row,'app')
-    })).filter(x=>x.service&&x.app);
-    const fluxByRequest=new Map();
-    fluxRows.forEach(item=>{
-      const key=requestKey(item.service,item.app);
-      if(!fluxByRequest.has(key)) fluxByRequest.set(key,[]);
-      fluxByRequest.get(key).push(item.row);
-    });
-
-    state.requests=requestTable.rows.map(row=>{
-      const request={
-        id:Number(row.id),
-        service:fieldDisplay(requestTable,row,'service'),
-        app:fieldDisplay(requestTable,row,'app'),
-        priority:fieldDisplay(requestTable,row,'priority'),
-        editor:fieldDisplay(requestTable,row,'editor'),
-        playstore:fieldDisplay(requestTable,row,'playstore'),
-        paid:fieldDisplay(requestTable,row,'paid'),
-        device:fieldDisplay(requestTable,row,'device'),
-        vector:fieldDisplay(requestTable,row,'vector'),
-        privateAccess:fieldDisplay(requestTable,row,'privateAccess'),
-        version:fieldDisplay(requestTable,row,'version'),
-        rawRow:row
-      };
-      const qRows=qualificationByApp.get(norm(request.app))||[];
-      const fRows=fluxByRequest.get(requestKey(request.service,request.app))||[];
-      request.qualification=deriveQualification(request,qRows);
-      request.flux=deriveFlux(request,fRows);
-      request.activeNodes=mergeActiveNodes(request.qualification,request.flux);
-      return request;
-    }).filter(request=>request.service&&request.app);
-  }
-
-  async function loadData(){
-    if(state.loading) return;
-    state.loading=true;
-    dom.refreshState.textContent='Chargement…';
-    dom.errorBanner.innerHTML='';
-    try{
-      await listTables();
-      await loadMetadata();
-      const [requests,qualification,flux]=await Promise.all([loadTable('requests'),loadTable('qualification'),loadTable('flux')]);
-      state.tables={requests,qualification,flux};
-      await buildReferenceCatalogs();
-      normalizeTables();
-      populateFilters();
-      if(state.selectedRequestId && !state.requests.some(r=>r.id===state.selectedRequestId)) state.selectedRequestId=null;
-      render();
-      dom.refreshState.textContent=`Actualisé à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
-    }catch(error){
-      console.error(error);
-      dom.errorBanner.innerHTML=`<div class="technical-error"><strong>Chargement impossible.</strong> ${esc(error.message||String(error))} Vérifiez l’accès complet et utilisez « Configurer » si nécessaire.</div>`;
-      dom.refreshState.textContent='Erreur';
-      if(!state.options.tableIds?.requests || !state.options.tableIds?.qualification || !state.options.tableIds?.flux) openConfig();
-    }finally{
-      state.loading=false;
-    }
-  }
-
-  function baseFilteredRequests(){
-    return state.requests.filter(request=>{
-      if(state.serviceFilter && request.service!==state.serviceFilter) return false;
-      if(state.priorityFilter && request.priority!==state.priorityFilter) return false;
-      return true;
-    });
-  }
-
-  function visibleRequests(){
-    return baseFilteredRequests().filter(request=>!state.nodeFilter || request.activeNodes.has(state.nodeFilter));
-  }
-
-  function populateFilters(){
-    const currentService=state.serviceFilter;
-    const currentPriority=state.priorityFilter;
-    const services=unique(state.requests.map(r=>r.service)).sort((a,b)=>a.localeCompare(b,'fr'));
-    const priorities=unique(state.requests.map(r=>r.priority).filter(v=>v&&v!=='0')).sort((a,b)=>priorityRank(a)-priorityRank(b)||a.localeCompare(b,'fr'));
-    dom.serviceFilter.innerHTML='<option value="">Tous les services</option>'+services.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
-    dom.priorityFilter.innerHTML='<option value="">Toutes les priorités</option>'+priorities.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
-    dom.serviceFilter.value=services.includes(currentService)?currentService:'';
-    dom.priorityFilter.value=priorities.includes(currentPriority)?currentPriority:'';
-    state.serviceFilter=dom.serviceFilter.value;
-    state.priorityFilter=dom.priorityFilter.value;
-  }
-
-  function requestStatusClass(kind){
-    if(kind.complete) return 'status-good';
-    if(kind.required && !kind.created) return 'status-bad';
-    if(kind.required) return 'status-warn';
-    return '';
-  }
-
-  function renderRequestFilters(){
-    const bits=[];
-    if(state.nodeFilter){
-      const node=PROCESS_NODES.find(n=>n.key===state.nodeFilter);
-      bits.push(`<span class="filter-pill">Étape : ${esc(node?.label||state.nodeFilter)} <button data-clear-filter="node">×</button></span>`);
-    }
-    const count=visibleRequests().length;
-    bits.push(`<span class="panel-desc">${count} demande${count>1?'s':''} affichée${count>1?'s':''}</span>`);
-    dom.requestFilterState.innerHTML=bits.join('');
-    dom.requestFilterState.querySelector('[data-clear-filter="node"]')?.addEventListener('click',()=>{state.nodeFilter=null;render();});
-  }
-
-  function renderRequestList(){
-    const list=visibleRequests().sort((a,b)=>priorityRank(a.priority)-priorityRank(b.priority)||a.app.localeCompare(b.app,'fr')||a.service.localeCompare(b.service,'fr'));
-    if(state.selectedRequestId && !list.some(r=>r.id===state.selectedRequestId)) state.selectedRequestId=null;
-    if(!list.length){
-      dom.requestList.innerHTML='<div class="empty-compact">Aucune demande ne correspond aux filtres sélectionnés.</div>';
-      return;
-    }
-    dom.requestList.innerHTML=list.map(request=>`
-      <button class="request-item ${state.selectedRequestId===request.id?'active':''}" data-request-id="${request.id}">
-        <div class="request-item-title">${esc(request.app)}</div>
-        <div class="request-item-sub"><span>${esc(request.service)}</span><span class="priority-pill ${priorityClass(request.priority)}">${esc(formatPriority(request.priority))}</span></div>
-        <div class="mini-statuses">
-          <div class="mini-status"><span class="mini-status-label">Qualification</span><span class="mini-status-value ${requestStatusClass(request.qualification)}">${esc(request.qualification.label)}</span></div>
-          <div class="mini-status"><span class="mini-status-label">Flux</span><span class="mini-status-value ${requestStatusClass(request.flux)}">${esc(request.flux.label)}</span></div>
-        </div>
-      </button>`).join('');
-    dom.requestList.querySelectorAll('[data-request-id]').forEach(button=>button.addEventListener('click',()=>{
-      state.selectedRequestId=Number(button.dataset.requestId);
-      render();
-    }));
-  }
-
-  function nodeSummary(nodeKey){
-    const requests=baseFilteredRequests().filter(r=>r.activeNodes.has(nodeKey));
-    const apps=new Set(requests.map(r=>norm(r.app)));
-    let q=0,f=0;
-    requests.forEach(r=>{
-      const sources=r.activeNodes.get(nodeKey)||new Set();
-      if(sources.has('qualification')) q++;
-      if(sources.has('flux')) f++;
-    });
-    return {appCount:apps.size,demandCount:requests.length,q,f};
-  }
-
-  function renderDiagram(){
-    const selected=state.requests.find(r=>r.id===state.selectedRequestId)||null;
-    PROCESS_NODES.forEach(node=>{
-      const element=document.querySelector(`.process-node[data-node="${node.key}"]`);
-      if(!element) return;
-      const summary=nodeSummary(node.key);
-      element.querySelector('.node-count').textContent=summary.appCount;
-      element.querySelector('.node-meta').textContent=`Q ${summary.q} · F ${summary.f} · ${summary.demandCount} dem.`;
-      element.classList.toggle('empty',summary.demandCount===0);
-      element.classList.toggle('filter-active',state.nodeFilter===node.key);
-      element.classList.remove('selected-qualification','selected-flux','selected-both');
-      if(selected?.activeNodes.has(node.key)){
-        const sources=selected.activeNodes.get(node.key);
-        if(sources.has('qualification')&&sources.has('flux')) element.classList.add('selected-both');
-        else if(sources.has('qualification')) element.classList.add('selected-qualification');
-        else if(sources.has('flux')) element.classList.add('selected-flux');
+    const COL_ALIASES = {
+      apps: {
+        service: ["Service utilisateur", "Service Utilisateur", "Services utilisateurs", "Service demandeur"],
+        appName: ["Nom de l'application", "Application", "Nom application", "Nom"],
+        editor: ["Editeur", "Éditeur", "Editeur de l'application", "Éditeur de l'application"],
+        playstore: ["Playstore", "Play Store", "Présence Playstore", "Application Playstore"],
+        paid: ["Application Payante", "Payante", "Application payante"],
+        device: ["Dispositif d'accès", "Dispositif d’acces", "Dispositifs utilisés"],
+        vector: ["Vecteur d'accès", "Vecteur d’acces", "Accès", "Vecteur"],
+        private: ["Accès à des ressources Privées", "Accès ressources privées", "Ressources privées"],
+        version: ["Version de l'application utilisée", "Version", "Version utilisée"],
+        qualified: ["Qualifiée ACMOSS", "Qualifiée RRF", "Application qualifiée", "Qualifiée"],
+        status: ["Statut"],
+        step: ["Etape", "Étape"],
+        priority: ["Priorité DUD", "Priorité", "Prio"],
+        comment: ["Commmentaire", "Commentaire", "Commentaires"]
+      },
+      flux: {
+        service: ["Service demandeur", "Service utilisateur", "Service Utilisateur"],
+        appName: ["Nom de l'application", "Application", "Nom application"],
+        version: ["Version de l'application", "Version"],
+        address: ["Adresse des ressources", "Adresse ressource", "Ressource"],
+        description: ["Description des ressources", "Description"],
+        client: ["Type de client associé", "Type client"],
+        devices: ["Dispositifs utilisés", "Dispositif"],
+        rights: ["Droits utilisateur", "Droits"],
+        exposure: ["Type d'exposition", "Type exposition"],
+        exposureDetails: ["Détails d’exposition", "Détails exposition"],
+        mobilePrereq: ["Prérequis mobile", "Prérequis\n  mobile"],
+        desktopPrereq: ["Prérequis poste fixe", "Prérequis poste\n  fixe"],
+        services: ["Services nécessaires", "Services"],
+        protocol: ["Protocoles", "Protocole"],
+        qos: ["QoS applicative(Voix, Vidéo, Données critiques, Background).", "QoS applicative", "QoS"],
+        appConfig: ["L'éditeur utilise -t-il AppConfig ?", "AppConfig"],
+        comments: ["Commentaires", "Commentaire"],
+        status: ["Statut flux", "Statut"]
+      },
+      qual: {
+        appName: ["Nom de l'application", "Application", "Nom application", "Nom"],
+        type: ["Type"],
+        version: ["Version Qualifiée", "Version qualifiée", "Version"],
+        editor: ["Éditeur", "Editeur"],
+        ssi: ["Qualification SSI", "Statut SSI"],
+        functional: ["Qualification Fonctionnelle", "Qualification fonctionnelle", "Statut Fonctionnel", "Statut Fonctionnelle"],
+        commentFunctional: ["Commentaire Fonctionnelle", "Commentaire fonctionnelle", "Commentaire Fonctionnel"],
+        commentSSI: ["Commentaire SSI", "Commentaires SSI"]
       }
-    });
-  }
-
-  function activeNodeChips(request){
-    const chips=[];
-    request.activeNodes.forEach((sources,key)=>{
-      const node=PROCESS_NODES.find(n=>n.key===key);
-      if(!node) return;
-      const cls=sources.has('qualification')&&sources.has('flux')?'qual':sources.has('qualification')?'qual':'flux';
-      const prefix=sources.has('qualification')&&sources.has('flux')?'Qualification + Flux':sources.has('qualification')?'Qualification':'Flux';
-      chips.push(`<span class="chip ${cls}">${esc(prefix)} : ${esc(node.label)}</span>`);
-    });
-    return chips.length?chips.join(''):'<span class="chip good">Aucune étape active détectée</span>';
-  }
-
-  function renderDetails(){
-    const request=state.requests.find(r=>r.id===state.selectedRequestId);
-    if(!request){
-      dom.detailsTitle.textContent='Sélectionnez une demande';
-      dom.detailsSub.textContent='Le détail de la qualification et des flux apparaîtra ici.';
-      dom.detailsList.innerHTML='<div class="empty-state">Cliquez sur une demande de la liste pour visualiser sa position dans le processus.</div>';
-      return;
-    }
-    dom.detailsTitle.textContent=`${request.app} — ${request.service}`;
-    dom.detailsSub.textContent=`Demande B_Applications #${request.id}`;
-    const q=request.qualification;
-    const f=request.flux;
-    const fluxTable=state.tables.flux;
-    const fluxRows=f.rows.map(row=>{
-      const resource=fieldDisplay(fluxTable,row,'resource')||fieldDisplay(fluxTable,row,'resourceDescription')||'Ressource non renseignée';
-      const status=fieldDisplay(fluxTable,row,'status')||'Sans statut';
-      const protocols=fieldDisplay(fluxTable,row,'protocols');
-      const comments=fieldDisplay(fluxTable,row,'comments');
-      return `<div class="flux-row">
-        <div class="flux-row-head"><span class="flux-resource">${esc(resource)}</span><span class="flux-status">${esc(status)}</span></div>
-        ${protocols?`<div class="panel-desc" style="margin-top:4px">Protocole : ${esc(protocols)}</div>`:''}
-        ${comments?`<div class="comment">${esc(comments)}</div>`:''}
-      </div>`;
-    }).join('');
-
-    dom.detailsList.innerHTML=`
-      <div class="detail-section">
-        <div class="detail-section-title">Demande initiale</div>
-        <div class="detail-grid">
-          <div class="detail-cell"><div class="detail-label">Service</div><div class="detail-value">${esc(request.service)}</div></div>
-          <div class="detail-cell"><div class="detail-label">Priorité</div><div class="detail-value">${esc(formatPriority(request.priority))}</div></div>
-          <div class="detail-cell"><div class="detail-label">Éditeur</div><div class="detail-value">${esc(request.editor||'Non renseigné')}</div></div>
-          <div class="detail-cell"><div class="detail-label">Version utilisée</div><div class="detail-value">${esc(request.version||'Non renseignée')}</div></div>
-          <div class="detail-cell"><div class="detail-label">Application payante</div><div class="detail-value">${esc(request.paid||'Non renseigné')}</div></div>
-          <div class="detail-cell"><div class="detail-label">Ressources privées</div><div class="detail-value">${esc(request.privateAccess||'Non renseigné')}</div></div>
-          <div class="detail-cell" style="grid-column:1/-1"><div class="detail-label">Vecteur d'accès</div><div class="detail-value">${esc(request.vector||'Non renseigné')}</div></div>
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-section-title">Position dans le processus</div>
-        <div class="chips">${activeNodeChips(request)}</div>
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-section-title">Qualification — REF_Applications Qualifiées</div>
-        <div class="chips">
-          <span class="chip ${q.created?'good':'warn'}">${q.created?'Ligne trouvée':'Ligne à créer'}</span>
-          <span class="chip ${q.complete?'good':'qual'}">${q.complete?'Application qualifiée':'Qualification en cours / à lancer'}</span>
-        </div>
-        <div class="detail-grid" style="margin-top:9px">
-          <div class="detail-cell"><div class="detail-label">Qualification SSI</div><div class="detail-value">${esc(q.ssiStatus)}</div></div>
-          <div class="detail-cell"><div class="detail-label">Qualification fonctionnelle</div><div class="detail-value">${esc(q.functionalStatus)}</div></div>
-        </div>
-        ${q.commentSSI?`<div class="comment"><strong>Commentaire SSI</strong><br>${esc(q.commentSSI)}</div>`:''}
-        ${q.commentFunctional?`<div class="comment"><strong>Commentaire fonctionnel</strong><br>${esc(q.commentFunctional)}</div>`:''}
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-section-title">Flux — REF_Flux Applications</div>
-        <div class="chips">
-          <span class="chip ${f.required?'warn':'good'}">Besoin de flux : ${f.required?'Oui':'Non'}</span>
-          ${f.required?`<span class="chip ${f.created?'good':'warn'}">${f.created?`${f.rows.length} ligne(s) trouvée(s)`:'Ligne(s) à créer'}</span>`:''}
-          ${f.statuses.length?`<span class="chip flux">${esc(f.statuses.join(' / '))}</span>`:''}
-        </div>
-        ${fluxRows||(!f.required?'<div class="comment">Aucun travail de flux n’est requis d’après les informations de B_Applications.</div>':'<div class="comment">Aucune ligne correspondant au couple service + application n’a été trouvée.</div>')}
-      </div>`;
-  }
-
-  function render(){
-    renderRequestFilters();
-    renderRequestList();
-    renderDiagram();
-    renderDetails();
-    setZoom(state.zoom);
-  }
-
-  function setZoom(value){
-    state.zoom=Math.max(.65,Math.min(1.55,Math.round(value*100)/100));
-    dom.diagramShell.style.transform=`scale(${state.zoom})`;
-    dom.diagramShell.parentElement.style.minHeight=`${920*state.zoom}px`;
-    dom.zoomChip.textContent=`${Math.round(state.zoom*100)}%`;
-  }
-
-  async function openConfig(){
-    await listTables();
-    const options=['<option value="">Sélectionner une table</option>',...state.tableIds.filter(id=>!id.startsWith('_grist_')).sort().map(id=>`<option value="${esc(id)}">${esc(id)}</option>`)].join('');
-    dom.configRequests.innerHTML=options;
-    dom.configQualification.innerHTML=options;
-    dom.configFlux.innerHTML=options;
-    dom.configRequests.value=state.options.tableIds?.requests||findTableId(TABLE_DEFS.requests,'');
-    dom.configQualification.value=state.options.tableIds?.qualification||findTableId(TABLE_DEFS.qualification,'');
-    dom.configFlux.value=state.options.tableIds?.flux||findTableId(TABLE_DEFS.flux,'');
-    dom.configBackdrop.classList.remove('hidden');
-  }
-
-  function closeConfig(){dom.configBackdrop.classList.add('hidden');}
-
-  async function saveConfig(){
-    state.options.tableIds={
-      requests:dom.configRequests.value,
-      qualification:dom.configQualification.value,
-      flux:dom.configFlux.value
     };
-    await grist.setOptions(state.options);
-    closeConfig();
-    await loadData();
-  }
 
-  function bindEvents(){
-    dom.configureBtn.addEventListener('click',openConfig);
-    dom.closeConfigBtn.addEventListener('click',closeConfig);
-    dom.cancelConfigBtn.addEventListener('click',closeConfig);
-    dom.saveConfigBtn.addEventListener('click',saveConfig);
-    dom.configBackdrop.addEventListener('click',event=>{if(event.target===dom.configBackdrop)closeConfig();});
-    dom.serviceFilter.addEventListener('change',()=>{state.serviceFilter=dom.serviceFilter.value;state.selectedRequestId=null;render();});
-    dom.priorityFilter.addEventListener('change',()=>{state.priorityFilter=dom.priorityFilter.value;state.selectedRequestId=null;render();});
-    dom.resetFiltersBtn.addEventListener('click',()=>{state.serviceFilter='';state.priorityFilter='';state.nodeFilter=null;state.selectedRequestId=null;dom.serviceFilter.value='';dom.priorityFilter.value='';render();});
-    dom.allBtn.addEventListener('click',()=>{state.nodeFilter=null;state.selectedRequestId=null;render();});
-    dom.zoomInBtn.addEventListener('click',()=>setZoom(state.zoom+.1));
-    dom.zoomOutBtn.addEventListener('click',()=>setZoom(state.zoom-.1));
-    dom.refreshBtn.addEventListener('click',loadData);
-    document.querySelectorAll('.process-node').forEach(node=>{
-      const activate=()=>{const key=node.dataset.node;state.nodeFilter=state.nodeFilter===key?null:key;state.selectedRequestId=null;render();};
-      node.addEventListener('click',activate);
-      node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
-    });
-    dom.diagramScroll.addEventListener('wheel',event=>{
-      if(!event.ctrlKey)return;
-      event.preventDefault();
-      setZoom(state.zoom+(event.deltaY<0?.06:-.06));
-    },{passive:false});
-  }
+    let tableIds = {}, allTableIds = [], runtime = {}, metadataByTable = new Map(), columnMetaById = new Map(), referenceCatalogs = new Map();
+    let appsAgg = [], selectedAppKey = "", selectedWorkKey = "", editSubject = null, editorControls = new Map();
+    const state = { search: "", service: "", workStatus: "", priority: "", playstore: "", qualification: "", sort: "priority" };
+    const $ = (id) => document.getElementById(id);
 
-  async function start(){
-    bindEvents();
-    try{
-      grist.ready({requiredAccess:'full'});
-      if(typeof grist.onOptions==='function'){
-        grist.onOptions(options=>{
-          state.optionsReceived=true;
-          state.options=options&&typeof options==='object'?options:{tableIds:{}};
+    grist.ready({ requiredAccess: "full" });
+    grist.onOptions((opts) => { if (opts?.tableIds) tableIds = opts.tableIds; });
+
+    function normalizeKey(v) { return String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "").trim(); }
+    function normalizeText(v) { return String(v ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+    function asText(v) { if (v === null || v === undefined || v === 0 || v === "0") return ""; if (Array.isArray(v)) return listValues(v).map(asText).filter(Boolean).join(", "); return String(v); }
+    function listValues(v) { if (!Array.isArray(v)) return v === null || v === undefined || v === "" ? [] : [v]; return v.filter(x => x !== "L" && x !== "l" && x !== null && x !== undefined && x !== ""); }
+    function tableRows(raw) { if (!raw) return []; if (Array.isArray(raw)) return raw; const ids = raw.id || []; return ids.map((id, i) => { const row = { id }; Object.keys(raw).forEach(k => row[k] = raw[k]?.[i]); return row; }); }
+    function showToast(msg) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.add("hidden"), 3000); }
+    function withTimeout(promise, label, ms = 9000) { return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} : délai dépassé`)), ms))]); }
+    async function safeFetchTable(id) { return withTimeout(grist.docApi.fetchTable(id), `Lecture ${id}`); }
+    async function refreshTableIds() { try { allTableIds = (await withTimeout(grist.docApi.listTables(), "Liste des tables")) || []; } catch(e) { allTableIds = []; } return allTableIds; }
+    async function findTableId(def, override) { if (override) return override; if (!allTableIds.length) await refreshTableIds(); const visible = allTableIds.filter(id => !String(id).startsWith("_grist_")); for (const c of def.candidates) { const exact = visible.find(id => id === c); if (exact) return exact; } for (const c of def.candidates) { const n = visible.find(id => normalizeKey(id) === normalizeKey(c)); if (n) return n; } return visible.find(id => def.fuzzy.every(f => normalizeKey(id).includes(normalizeKey(f)))) || null; }
+    function parseJsonObject(v) { if (!v) return {}; if (typeof v === "object") return v; try { const p = JSON.parse(String(v)); return p && typeof p === "object" ? p : {}; } catch(_) { return {}; } }
+    async function loadMetadata() {
+      metadataByTable = new Map(); columnMetaById = new Map();
+      try {
+        const tables = tableRows(await safeFetchTable("_grist_Tables"));
+        const cols = tableRows(await safeFetchTable("_grist_Tables_column"));
+        const tableNameByMetaId = new Map(tables.map(r => [Number(r.id), r.tableId]));
+        cols.forEach(r => {
+          const tableId = tableNameByMetaId.get(Number(r.parentId)); if (!tableId) return;
+          const meta = { metaId:Number(r.id), tableId, colId:r.colId, label:r.label || r.colId, type:r.type || "Any", isFormula:Boolean(r.isFormula), visibleColMetaId:Number(r.visibleCol || 0), displayColMetaId:Number(r.displayCol || 0), widgetOptions:parseJsonObject(r.widgetOptions) };
+          columnMetaById.set(meta.metaId, meta); if (!metadataByTable.has(tableId)) metadataByTable.set(tableId, new Map()); metadataByTable.get(tableId).set(meta.colId, meta);
         });
-      }
-      if(typeof grist.onRecords==='function'){
-        let timer=null;
-        grist.onRecords(()=>{clearTimeout(timer);timer=setTimeout(loadData,350);});
-      }
-      await new Promise(resolve=>setTimeout(resolve,250));
-      await loadData();
-    }catch(error){
-      console.error(error);
-      dom.errorBanner.innerHTML=`<div class="technical-error">${esc(error.message||String(error))}</div>`;
-      dom.refreshState.textContent='Erreur';
+        columnMetaById.forEach(meta => {
+          const m = /^(?:Ref|RefList):(.+)$/.exec(meta.type || ""); meta.refTableId = m ? m[1] : "";
+          const visible = columnMetaById.get(meta.visibleColMetaId); const display = columnMetaById.get(meta.displayColMetaId);
+          meta.visibleTableId = visible?.tableId || ""; meta.visibleColId = visible?.colId || ""; meta.displayTableId = display?.tableId || ""; meta.displayColId = display?.colId || "";
+        });
+      } catch(e) { console.warn("metadata unavailable", e); }
     }
-  }
+    function refTarget(type) { const m = /^(?:Ref|RefList):(.+)$/.exec(type || ""); return m ? m[1] : ""; }
+    function chooseDisplayColumn(tableId, raw) {
+      const keys = Object.keys(raw || {}).filter(k => k !== "id"); const meta = metadataByTable.get(tableId) || new Map();
+      const aliases = ["nom", "nomlong", "libelle", "libellé", "valeur", "titre", "intitule", "name", "label", "application"];
+      for (const a of aliases.map(normalizeKey)) { const k = keys.find(c => normalizeKey(c) === a || normalizeKey(meta.get(c)?.label) === a); if (k) return k; }
+      return keys.find(k => !String(meta.get(k)?.type || "").startsWith("Ref")) || keys[0] || "";
+    }
+    async function loadReferenceCatalogs() {
+      referenceCatalogs = new Map(); const targets = new Set();
+      Object.values(runtime).forEach(t => t?.meta?.forEach(m => { if (m.refTableId) targets.add(m.refTableId); }));
+      await Promise.all([...targets].map(async tableId => {
+        try { const raw = await safeFetchTable(tableId); const rows = tableRows(raw); const displayCol = chooseDisplayColumn(tableId, raw); const items = rows.map(r => ({ id:Number(r.id), label: asText(r[displayCol]) || `#${r.id}`, rawRow:r })).filter(i => i.id); referenceCatalogs.set(tableId, { tableId, displayCol, items, byId:new Map(items.map(i => [i.id, i])) }); } catch(e) { console.warn(`ref ${tableId} not loaded`, e); }
+      }));
+    }
+    function displayRawValue(raw, meta) {
+      if (raw === null || raw === undefined || raw === "" || raw === 0 || raw === "0") return "";
+      const type = meta?.type || "Any"; const target = refTarget(type);
+      if (target) { const catalog = referenceCatalogs.get(target); const resolve = (v) => { if (!v || v === "0") return ""; const num = Number(v); return catalog?.byId.get(num)?.label || asText(v); }; return type.startsWith("RefList:") ? listValues(raw).map(resolve).filter(Boolean).join(", ") : resolve(raw); }
+      if (type === "ChoiceList") return listValues(raw).map(asText).filter(Boolean).join(", ");
+      return asText(raw);
+    }
+    function columnMeta(table, colId) { return metadataByTable.get(table.id)?.get(colId) || { colId, label: colId, type: "Any" }; }
+    function findCol(table, aliases) {
+      if (!table?.raw) return ""; const keys = Object.keys(table.raw).filter(k => k !== "id"); const meta = metadataByTable.get(table.id) || new Map();
+      for (const a of aliases.map(normalizeKey)) { const k = keys.find(c => normalizeKey(c) === a || normalizeKey(meta.get(c)?.label) === a); if (k) return k; }
+      return "";
+    }
+    function display(table, row, key) { const col = table?.cols?.[key]; if (!col) return ""; return displayRawValue(row[col], columnMeta(table, col)); }
+    function isYes(v) { const n = normalizeText(v); return ["oui", "yes", "true", "vrai", "payant", "playstore"].includes(n) || n.startsWith("oui") || n === "1"; }
+    function isNo(v) { const n = normalizeText(v); return ["non", "no", "false", "faux", "0"].includes(n) || n.startsWith("non"); }
+    function containsRIE(v) { return /\brie\b/i.test(asText(v)); }
+    function priorityRank(p) { const n = normalizeKey(p); const m = /p(\d+)/.exec(n); if (m) return Number(m[1]); if (n === "haute") return 0; if (n === "moyenne") return 2; if (n === "basse") return 4; return 99; }
+    function bestPriority(values) { const sorted = [...new Set(values.filter(Boolean))].sort((a,b)=>priorityRank(a)-priorityRank(b)); return sorted[0] || ""; }
+    function prioClass(p) { const n = normalizeKey(p); return n.startsWith("p0") ? "prio-p0" : n.startsWith("p1") ? "prio-p1" : n.startsWith("p2") ? "prio-p2" : (n.startsWith("p3") || n.startsWith("p4")) ? "prio-p3" : ""; }
+    function isTerminal(v) { const n = normalizeText(v).replace(/[^a-z0-9àâäéèêëîïôöùûüç]+/g, " ").trim(); return TERMINAL_STATUSES.some(t => { const k = normalizeText(t).replace(/[^a-z0-9àâäéèêëîïôöùûüç]+/g, " ").trim(); return n === k || n.endsWith(` ${k}`); }); }
+    function appKey(v) { return normalizeKey(v); }
+    function compact(text, max=140) { const s = asText(text).trim(); return s.length > max ? s.slice(0, max).trim() + "…" : s; }
+    function unique(arr) { return [...new Set(arr.filter(v => asText(v).trim()))].sort((a,b)=>asText(a).localeCompare(asText(b),"fr")); }
+    function escapeHtml(v) { return String(v ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
 
-  start();
-})();
-</script>
+    async function loadData() {
+      $("lastRefresh").textContent = "Connexion à Grist…";
+      await refreshTableIds(); await loadMetadata();
+      const ids = {};
+      for (const [k, def] of Object.entries(TABLE_DEFS)) ids[k] = await findTableId(def, tableIds[k]);
+      const missing = Object.entries(ids).filter(([k,v]) => !v);
+      if (missing.length) { openConfig(true); throw new Error("Table(s) introuvable(s) : " + missing.map(([k])=>TABLE_DEFS[k].label).join(", ")); }
+      runtime = {};
+      for (const [k, id] of Object.entries(ids)) {
+        if (!id) continue;
+        const rawTable = await safeFetchTable(id);
+        runtime[k] = { id, raw: rawTable, rows: tableRows(rawTable), meta: metadataByTable.get(id) || new Map(), cols:{} };
+        const aliases = COL_ALIASES[k] || {}; Object.keys(aliases).forEach(key => runtime[k].cols[key] = findCol(runtime[k], aliases[key]));
+      }
+      await loadReferenceCatalogs();
+      $("lastRefresh").textContent = `Actualisé à ${new Date().toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"})}`;
+      buildAggregates(); populateFilters(); render();
+
+    }
+
+    const QUAL_VALID_STATUSES = ["valide", "validee", "qualifie", "qualifiee", "termine", "terminee", "traite", "traitee", "deploye", "deployee", "accepte", "acceptee", "complet", "complete", "ok"];
+    const QUAL_INVALID_STATUSES = ["non valide", "non validee", "refuse", "refusee", "ko", "abandonne", "abandonnee", "rejete", "rejetee"];
+    function qualificationStatusMatches(v, candidates) {
+      const n = normalizeText(v).replace(/[^a-z0-9àâäéèêëîïôöùûüç]+/g, " ").trim();
+      return Boolean(n) && candidates.some(value => { const k = normalizeText(value).replace(/[^a-z0-9àâäéèêëîïôöùûüç]+/g, " ").trim(); return n === k || n.endsWith(` ${k}`); });
+    }
+    function isQualificationValid(v) { return qualificationStatusMatches(v, QUAL_VALID_STATUSES); }
+    function isQualificationInvalid(v) { return qualificationStatusMatches(v, QUAL_INVALID_STATUSES); }
+    function classifyQualification(values) {
+      const filled = values.map(asText).map(v => v.trim()).filter(Boolean);
+      if (!filled.length) return { label:"Pas validé", className:"qual-status--not-valid", complete:false, inProgress:false };
+      if (filled.every(isQualificationInvalid)) return { label:"Pas validé", className:"qual-status--not-valid", complete:false, inProgress:false };
+      if (filled.every(isQualificationValid)) return { label:"Validé", className:"qual-status--valid", complete:true, inProgress:false };
+      return { label:"En cours", className:"qual-status--progress", complete:false, inProgress:true };
+    }
+    function buildQualificationIndex() {
+      const index = new Map(); const table = runtime.qual;
+      if (!table) return index;
+      for (const row of table.rows) {
+        const name = display(table,row,"appName"); const key = appKey(name); if (!key) continue;
+        if (!index.has(key)) index.set(key, []); index.get(key).push(row);
+      }
+      const result = new Map();
+      index.forEach((rows,key) => {
+        const ssiValues = rows.map(row => display(table,row,"ssi")).filter(Boolean);
+        const functionalValues = rows.map(row => display(table,row,"functional")).filter(Boolean);
+        const ssi = classifyQualification(ssiValues);
+        const functional = classifyQualification(functionalValues);
+        result.set(key, {
+          exists:true,
+          rows,
+          ssi,
+          functional,
+          complete:ssi.complete && functional.complete,
+          ongoing:!(ssi.complete && functional.complete),
+          commentSSI:unique(rows.map(row=>display(table,row,"commentSSI")).filter(Boolean)).join("\n"),
+          commentFunctional:unique(rows.map(row=>display(table,row,"commentFunctional")).filter(Boolean)).join("\n"),
+          version:unique(rows.map(row=>display(table,row,"version")).filter(Boolean)).join(" · "),
+          editor:unique(rows.map(row=>display(table,row,"editor")).filter(Boolean)).join(" · ")
+        });
+      });
+      return result;
+    }
+    function emptyQualificationInfo() {
+      return {
+        exists:false, rows:[],
+        ssi:{label:"Pas validé",className:"qual-status--not-valid",complete:false,inProgress:false},
+        functional:{label:"Pas validé",className:"qual-status--not-valid",complete:false,inProgress:false},
+        complete:false, ongoing:false, commentSSI:"", commentFunctional:"", version:"", editor:""
+      };
+    }
+    function buildAggregates() {
+      const qualificationIndex = buildQualificationIndex();
+      const groups = new Map();
+      const appsTable = runtime.apps, fluxTable = runtime.flux;
+      const ensure = (name) => { const key = appKey(name); if (!key) return null; if (!groups.has(key)) groups.set(key, { key, name, editors:new Set(), requests:[], fluxRows:[], qualification:qualificationIndex.get(key) || emptyQualificationInfo() }); return groups.get(key); };
+      for (const row of appsTable.rows) {
+        const name = display(appsTable, row, "appName"); const g = ensure(name); if (!g) continue; const ed = display(appsTable, row, "editor"); if (ed) g.editors.add(ed); g.requests.push(makeRequest(row));
+      }
+      if (fluxTable) for (const row of fluxTable.rows) {
+        const flux = makeFlux(row); const g = ensure(flux.appName);
+        if (g) g.fluxRows.push(flux);
+      }
+      appsAgg = [...groups.values()].map(finalizeApp);
+      sortAggregates();
+    }
+    function makeRequest(row) {
+      const t = runtime.apps; const appName = display(t,row,"appName"); const service = display(t,row,"service"); const paidText = display(t,row,"paid"); const privText = display(t,row,"private"); const vector = display(t,row,"vector"); const play = display(t,row,"playstore");
+      const paid = isYes(paidText); const priv = isYes(privText); const rie = containsRIE(vector);
+      return { sourceTable:t.id, row, id:row.id, appName, service, editor:display(t,row,"editor"), playstore:play, paid, privateAccess:priv, rie, qualified:false, reasons:[], workRequired:false, fluxRequired:priv||rie, priority:display(t,row,"priority"), version:display(t,row,"version"), device:display(t,row,"device"), vector };
+    }
+    function makeFlux(row) {
+      const t = runtime.flux;
+      return {
+        row, id:row.id, service:display(t,row,"service"), appName:display(t,row,"appName"), version:display(t,row,"version"), address:display(t,row,"address"), description:display(t,row,"description"), client:display(t,row,"client"), devices:display(t,row,"devices"), rights:display(t,row,"rights"), exposure:display(t,row,"exposure"), exposureDetails:display(t,row,"exposureDetails"), mobilePrereq:display(t,row,"mobilePrereq"), desktopPrereq:display(t,row,"desktopPrereq"), services:display(t,row,"services"), protocol:display(t,row,"protocol"), qos:display(t,row,"qos"), appConfig:display(t,row,"appConfig"), comments:display(t,row,"comments"), status:display(t,row,"status"), toOpen:!isTerminal(display(t,row,"status"))
+      };
+    }
+    function matchFluxRows(fluxRows, req) {
+      const reqService = normalizeKey(req.service);
+      return fluxRows.filter(f => {
+        const fluxService = normalizeKey(f.service);
+        if (!reqService) return !fluxService;
+        return fluxService === reqService;
+      });
+    }
+    function finalizeApp(g) {
+      const services = new Set(g.requests.map(r=>r.service).filter(Boolean));
+      g.requests.forEach(req => {
+        req.matchedFlux = matchFluxRows(g.fluxRows, req);
+        req.fluxOpen = req.matchedFlux.filter(f=>f.toOpen).length;
+        req.fluxTotal = req.matchedFlux.length;
+        req.qualified = g.qualification.complete;
+        req.reasons = [];
+        if (req.paid) req.reasons.push("Application payante");
+        if (req.privateAccess) req.reasons.push("Accès ressources privées");
+        if (req.rie) req.reasons.push("Accès via RIE");
+        if (!g.qualification.complete) req.reasons.push("Non qualifiée RRF");
+        req.workRequired = req.reasons.length > 0;
+      });
+      const relevantFlux = g.fluxRows.filter(f => f.appName || f.address || f.status);
+      const fluxToOpen = relevantFlux.filter(f => f.toOpen).length; const totalFlux = relevantFlux.length;
+      const priority = bestPriority(g.requests.map(r=>r.priority));
+      const qualificationRequired = !g.qualification.complete;
+      const fluxRequiredRequests = g.requests.filter(r=>r.fluxRequired);
+      const missingFlux = fluxRequiredRequests.some(r=>!r.matchedFlux.length);
+      const openFlux = fluxRequiredRequests.some(r=>r.matchedFlux.some(f=>f.toOpen));
+      const hasAnyWork = qualificationRequired || fluxRequiredRequests.length > 0;
+      const playValues = [...new Set(g.requests.map(r=>normalizeText(r.playstore)).filter(Boolean))]; let playstore = "Inconnu"; if (playValues.some(v=>v.includes("oui") || v.includes("yes"))) playstore = playValues.some(v=>v.includes("non")) ? "Mixte" : "Oui"; else if (playValues.some(v=>v.includes("non"))) playstore = "Non";
+      let globalStatus;
+      if (!hasAnyWork) globalStatus = "Aucun travail requis";
+      else if ((g.qualification.exists && !g.qualification.complete) || openFlux) globalStatus = "Travaux en cours";
+      else if ((!g.qualification.exists && qualificationRequired) || missingFlux) globalStatus = "Travaux requis";
+      else globalStatus = "Travaux terminés";
+      const qualificationStatus = g.qualification.complete ? "Qualification validée" : g.qualification.exists ? "Qualification en cours" : "Qualification à lancer";
+      return { ...g, services:[...services].sort(), serviceCount:services.size, totalFlux, fluxToOpen, priority, qualificationRequired, qualificationStatus, playstore, globalStatus, editors:[...g.editors].sort() };
+    }
+    function sortAggregates() {
+      appsAgg.sort((a,b) => {
+        if (state.sort === "service") return (a.services[0] || "zzzz").localeCompare(b.services[0] || "zzzz", "fr") || a.name.localeCompare(b.name, "fr");
+        if (state.sort === "flux") return b.fluxToOpen - a.fluxToOpen || a.name.localeCompare(b.name, "fr");
+        if (state.sort === "application") return a.name.localeCompare(b.name, "fr");
+        return priorityRank(a.priority)-priorityRank(b.priority) || a.name.localeCompare(b.name, "fr");
+      });
+    }
+
+
+    function populateFilters() {
+      fillSelect("serviceFilter", "Tous les services", unique(appsAgg.flatMap(a=>a.services)));
+      fillSelect("workStatusFilter", "Travaux : tous", unique(appsAgg.map(a=>a.globalStatus)));
+      fillSelect("priorityFilter", "Toutes les priorités", unique(appsAgg.map(a=>a.priority)).sort((a,b)=>priorityRank(a)-priorityRank(b)));
+      fillSelect("playstoreFilter", "Playstore : tous", unique(appsAgg.map(a=>a.playstore)));
+      $("sortSelect").value = state.sort;
+      updateAppFilterButton();
+      updateAppSortButton();
+    }
+    function activeAppFilterCount() {
+      return [state.service, state.workStatus, state.priority, state.playstore, state.qualification].filter(Boolean).length;
+    }
+    function updateAppFilterButton() {
+      const count = activeAppFilterCount();
+      const button = $("appFilterBtn");
+      if (!button) return;
+      const panelOpen = !$("appFilterPanel").classList.contains("hidden");
+      button.classList.toggle("is-active", count > 0 || panelOpen);
+      $("appFilterCount").textContent = String(count);
+    }
+    function updateAppSortButton() {
+      const button = $("appSortBtn");
+      if (!button) return;
+      const panelOpen = !$("appSortPanel").classList.contains("hidden");
+      button.classList.toggle("is-active", state.sort !== "priority" || panelOpen);
+    }
+    function toggleAppPanel(kind) {
+      const filterPanel = $("appFilterPanel");
+      const sortPanel = $("appSortPanel");
+      if (kind === "filter") {
+        const shouldOpen = filterPanel.classList.contains("hidden");
+        filterPanel.classList.toggle("hidden", !shouldOpen);
+        sortPanel.classList.add("hidden");
+      } else {
+        const shouldOpen = sortPanel.classList.contains("hidden");
+        sortPanel.classList.toggle("hidden", !shouldOpen);
+        filterPanel.classList.add("hidden");
+      }
+      updateAppFilterButton();
+      updateAppSortButton();
+    }
+    function fillSelect(id, label, values) { const s=$(id), cur=s.value; s.innerHTML = `<option value="">${label}</option>` + values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join(""); if (values.includes(cur)) s.value=cur; }
+    function filteredApps() {
+      const q = normalizeText(state.search);
+      return appsAgg.filter(a => {
+        const hay = normalizeText([a.name, a.editors.join(" "), a.services.join(" "), a.globalStatus, a.priority, a.playstore, a.qualificationStatus, a.requests.map(r=>r.comment).join(" ")].join(" "));
+        if (q && !hay.includes(q)) return false;
+        if (state.service && !a.services.includes(state.service)) return false;
+        if (state.workStatus && a.globalStatus !== state.workStatus) return false;
+        if (state.priority && a.priority !== state.priority) return false;
+        if (state.playstore && a.playstore !== state.playstore) return false;
+        if (state.qualification === "yes" && !a.qualificationRequired) return false;
+        if (state.qualification === "no" && a.qualificationRequired) return false;
+        return true;
+      }).sort((a,b) => {
+        if (state.sort === "service") return (a.services[0] || "zzzz").localeCompare(b.services[0] || "zzzz", "fr") || a.name.localeCompare(b.name, "fr");
+        if (state.sort === "flux") return b.fluxToOpen - a.fluxToOpen || a.name.localeCompare(b.name, "fr");
+        if (state.sort === "application") return a.name.localeCompare(b.name, "fr");
+        return priorityRank(a.priority)-priorityRank(b.priority) || a.name.localeCompare(b.name, "fr");
+      });
+    }
+    function requestsForApp(app) {
+      if (!app) return [];
+      return app.requests
+        .filter(r => !state.service || r.service === state.service)
+        .sort((a,b) => priorityRank(a.priority)-priorityRank(b.priority) || (a.service || "").localeCompare(b.service || "", "fr"));
+    }
+    function workItemsForApp(app) {
+      if (!app) return [];
+      const items = requestsForApp(app).map(request => ({ type:"request", key:`request:${request.id}`, request }));
+      if (app.qualification?.exists && app.qualification?.ongoing) items.unshift({ type:"qualification", key:`qualification:${app.key}`, qualification:app.qualification, app });
+      return items;
+    }
+    function selectedWorkForApp(app) {
+      return workItemsForApp(app).find(item=>item.key===selectedWorkKey) || null;
+    }
+    function ensureSelection(list) {
+      if (!list.length) { selectedAppKey = ""; selectedWorkKey = ""; return; }
+      if (!list.some(a => a.key === selectedAppKey)) selectedAppKey = list[0].key;
+      const app = list.find(a => a.key === selectedAppKey) || list[0];
+      const works = workItemsForApp(app);
+      if (!works.some(item=>item.key===selectedWorkKey)) selectedWorkKey = works[0]?.key || "";
+    }
+    function render() {
+      const list = filteredApps();
+      ensureSelection(list);
+      updateAppFilterButton();
+      renderKpis(list);
+      renderAppList(list);
+      renderWorkList(list.find(a => a.key === selectedAppKey));
+      renderDetailsPanel(list.find(a => a.key === selectedAppKey));
+      updateAppFilterButton();
+      updateAppSortButton();
+    }
+    function renderKpis(list) {
+      const services = new Set(list.flatMap(a=>a.services));
+      const fluxToOpen = list.reduce((s,a)=>s+a.fluxToOpen,0);
+      const demands = list.reduce((s,a)=>s+a.requests.filter(r=>!state.service || r.service===state.service).length,0);
+      const data = [["Applications", list.length], ["Demandes", demands], ["Services demandeurs", services.size], ["Flux à traiter", fluxToOpen]];
+      $("kpiRow").innerHTML = data.map(([l,v]) => `<div class="kpi"><span class="kpi__label">${escapeHtml(l)}</span><span class="kpi__value">${v}</span></div>`).join("");
+    }
+    function statusClass(s) { return s === "Travaux requis" ? "status--todo" : s === "Travaux en cours" ? "status--warn" : s === "Travaux terminés" || s === "Aucun travail requis" ? "status--ok" : "status--neutral"; }
+    function renderAppList(list) {
+      $("appCount").textContent = list.length;
+      if (!list.length) { $("appList").innerHTML = `<div class="detail-empty">Aucune application ne correspond aux filtres.</div>`; return; }
+      $("appList").innerHTML = list.map(a => `
+        <button class="entity-card ${a.key===selectedAppKey?'is-selected':''}" data-app-key="${escapeHtml(a.key)}">
+          <div class="card-top">
+            <div class="card-main"><h3 class="app-title">${escapeHtml(a.name)}</h3><div class="app-editor">${escapeHtml(a.editors.join(", ") || "Éditeur non renseigné")}</div></div>
+            <span class="pill prio ${prioClass(a.priority)}">${escapeHtml(a.priority || "N.A")}</span>
+          </div>
+          <div class="status-row"><span class="pill ${statusClass(a.globalStatus)}">${escapeHtml(a.globalStatus)}</span>${a.qualificationRequired?`<span class="pill status--neutral">${escapeHtml(a.qualificationStatus)}</span>`:''}</div>
+          <div class="mini-metrics">
+            <div class="mini-metric"><span class="mini-label">Services demandeurs</span><span class="mini-value">${a.serviceCount}</span></div>
+            <div class="mini-metric"><span class="mini-label">Flux à traiter</span><span class="mini-value">${a.fluxToOpen}/${a.totalFlux}</span></div>
+            <div class="mini-metric"><span class="mini-label">Playstore</span><span class="mini-value">${escapeHtml(a.playstore)}</span></div>
+          </div>
+        </button>`).join("");
+      document.querySelectorAll("[data-app-key]").forEach(btn => btn.addEventListener("click", () => {
+        selectedAppKey = btn.dataset.appKey;
+        const app = appsAgg.find(a=>a.key===selectedAppKey);
+        selectedWorkKey = workItemsForApp(app)[0]?.key || "";
+        render();
+      }));
+    }
+    function renderWorkList(app) {
+      const works = workItemsForApp(app);
+      $("requestCount").textContent = works.length;
+      $("requestContext").textContent = app ? `Travaux pour ${app.name}` : "Sélectionnez une application";
+      if (!app) { $("requestList").innerHTML = `<div class="detail-empty">Sélectionnez une application dans la colonne de gauche.</div>`; return; }
+      if (!works.length) { $("requestList").innerHTML = `<div class="detail-empty">Aucun travail à afficher pour cette application.</div>`; return; }
+      $("requestList").innerHTML = works.map(item => {
+        if (item.type === "qualification") {
+          return `<button class="entity-card is-qualification ${item.key===selectedWorkKey?'is-selected':''}" data-work-key="${escapeHtml(item.key)}">
+            <div class="card-top">
+              <div class="card-main"><h3 class="request-title">Qualification de l'application</h3><div class="card-subtitle">Chantier transverse à l'ensemble des services demandeurs</div></div>
+              <span class="pill qualification-pill">Qualification</span>
+            </div>
+            <div class="qualification-summary"><span class="flag">Qualification SSI</span><span class="flag">Qualification fonctionnelle</span></div>
+            <div class="request-footer"><span>1 chantier de qualification</span><span>${item.app.services.length} service(s) concerné(s)</span></div>
+          </button>`;
+        }
+        const req=item.request;
+        return `<button class="entity-card ${item.key===selectedWorkKey?'is-selected':''}" data-work-key="${escapeHtml(item.key)}">
+          <div class="card-top">
+            <div class="card-main"><h3 class="request-title">${escapeHtml(req.service || "Service non renseigné")}</h3><div class="card-subtitle">Demande du service utilisateur</div></div>
+            <span class="pill prio ${prioClass(req.priority)}">${escapeHtml(req.priority || "N.A")}</span>
+          </div>
+          <div class="flag-row">
+            <span class="flag ${req.paid?'is-bad':'is-ok'}">Payante ${req.paid?'Oui':'Non'}</span>
+            <span class="flag ${req.privateAccess?'is-bad':'is-ok'}">Privé ${req.privateAccess?'Oui':'Non'}</span>
+            <span class="flag ${req.rie?'is-bad':'is-ok'}">RIE ${req.rie?'Oui':'Non'}</span>
+          </div>
+          <div class="request-footer"><span>${req.matchedFlux.length} flux associé(s)</span><span>${req.fluxRequired?'Flux requis':'Pas de flux requis'}</span></div>
+        </button>`;
+      }).join("");
+      document.querySelectorAll("[data-work-key]").forEach(btn => btn.addEventListener("click", () => { selectedWorkKey = btn.dataset.workKey; render(); }));
+    }
+    function qualificationStatusCard(title,status,comment) {
+      return `<article class="qualification-detail-card">
+        <div class="qualification-detail-head"><div class="qualification-detail-title">${escapeHtml(title)}</div><span class="pill ${status.className}">${escapeHtml(status.label)}</span></div>
+        ${comment?`<div class="qualification-detail-meta">${escapeHtml(comment)}</div>`:''}
+      </article>`;
+    }
+    function renderDetailsPanel(app) {
+      if (!app) { $("fluxContext").textContent = "Sélectionnez un travail"; $("fluxCount").textContent = "0"; $("fluxBody").innerHTML = `<div class="detail-empty">Sélectionnez une application puis un travail.</div>`; return; }
+      const work = selectedWorkForApp(app);
+      if (!work) { $("fluxContext").textContent = `Détails pour ${app.name}`; $("fluxCount").textContent = "0"; $("fluxBody").innerHTML = `<div class="detail-empty">Sélectionnez un travail dans la colonne centrale.</div>`; return; }
+      if (work.type === "qualification") {
+        const q=work.qualification;
+        $("fluxContext").textContent = `Détails de qualification pour ${app.name}`;
+        $("fluxCount").textContent = "2";
+        $("fluxBody").innerHTML = `<div class="qualification-detail-list">
+          ${qualificationStatusCard("Qualification SSI",q.ssi,q.commentSSI)}
+          ${qualificationStatusCard("Qualification fonctionnelle",q.functional,q.commentFunctional)}
+        </div>`;
+        return;
+      }
+      const req=work.request;
+      const fl=req.matchedFlux||[];
+      $("fluxContext").textContent = `Détails pour ${app.name} - ${req.service || "Service non renseigné"}`;
+      $("fluxCount").textContent = fl.length;
+      if (!fl.length) { $("fluxBody").innerHTML = ""; return; }
+      const open=fl.filter(f=>f.toOpen).length;
+      const treated=Math.max(0,fl.length-open);
+      const progress=fl.length?Math.round((treated/fl.length)*100):0;
+      let html=`<section class="progress-block"><div class="progress-head"><span>Avancement des flux</span><span>${treated}/${fl.length} traités · ${open} à traiter</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div></section>`;
+      html += `<div class="flux-list">${fl.sort((a,b)=>Number(a.toOpen)-Number(b.toOpen)).map(renderFluxCard).join("")}</div>`;
+      $("fluxBody").innerHTML=html;
+    }
+    function renderFluxCard(f) {
+      const status = f.status || "Statut non renseigné";
+      const meta = [f.version ? `Version ${f.version}` : "", f.protocol ? `Protocole ${f.protocol}` : "", f.exposure || "", f.services ? `Services : ${f.services}` : ""].filter(Boolean).join(" · ");
+      const desc = [f.description, f.comments].filter(Boolean).join(" — ");
+      const secondary = [f.client ? `Client : ${f.client}` : "", f.devices ? `Dispositifs : ${f.devices}` : "", f.qos ? `QoS : ${f.qos}` : ""].filter(Boolean).join(" · ");
+      return `<article class="flux-card ${f.toOpen?'is-open':'is-done'}"><div class="flux-top"><div class="flux-address">${escapeHtml(f.address || f.description || `Flux #${f.id}`)}</div><span class="pill ${f.toOpen?'status--warn':'status--ok'}">${escapeHtml(status)}</span></div>${meta?`<div class="flux-meta">${escapeHtml(meta)}</div>`:''}${secondary?`<div class="flux-meta">${escapeHtml(secondary)}</div>`:''}${desc?`<div class="flux-meta">${escapeHtml(compact(desc,320))}</div>`:''}</article>`;
+    }
+
+    function openConfig(show=false) { populateConfigSelects(); $("configPanel").classList.toggle("hidden", !show); }
+    function populateConfigSelects() { const opts = ["", ...allTableIds.filter(id => !String(id).startsWith("_grist_")).sort()]; [["cfgApps","apps"],["cfgFlux","flux"],["cfgQual","qual"]].forEach(([id,key]) => { const s=$(id); s.innerHTML = opts.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v || TABLE_DEFS[key].label)}</option>`).join(""); s.value = tableIds[key] || runtime[key]?.id || ""; }); }
+    async function saveConfig() { tableIds = { apps:$("cfgApps").value, flux:$("cfgFlux").value, qual:$("cfgQual").value }; await grist.setOptions({ tableIds }); $("configPanel").classList.add("hidden"); await loadData().catch(showError); }
+    function showError(error) { console.error(error); $("lastRefresh").textContent = "Erreur"; $("appList").innerHTML = `<div class="detail-empty">${escapeHtml(error.message || error)}</div>`; showToast(error.message || String(error)); }
+
+    function choiceOptions(meta) { const opts = meta?.widgetOptions?.choices || meta?.widgetOptions?.choiceOptions || []; if (Array.isArray(opts)) return opts.map(o => typeof o === "string" ? o : (o.label || o.value || "")).filter(Boolean); return []; }
+    function createControl(colId, rawValue, meta) {
+      const type = meta?.type || "Any"; const target = refTarget(type); const currentDisplay = displayRawValue(rawValue, meta); let node;
+      if (meta?.isFormula || type.startsWith("Attachments")) { node = document.createElement("input"); node.value = currentDisplay; node.disabled = true; return { node, get: () => rawValue, changed: () => false }; }
+      if (target && referenceCatalogs.get(target)) {
+        const items = referenceCatalogs.get(target).items;
+        if (type.startsWith("RefList:")) { node = document.createElement("select"); node.multiple = true; node.size = Math.min(8, Math.max(4, items.length)); node.innerHTML = items.map(i => `<option value="${i.id}">${escapeHtml(i.label)}</option>`).join(""); const current = new Set(listValues(rawValue).map(Number)); [...node.options].forEach(o => o.selected = current.has(Number(o.value))); return { node, get: () => ["L", ...[...node.selectedOptions].map(o=>Number(o.value))], changed: () => JSON.stringify([...current].sort()) !== JSON.stringify([...node.selectedOptions].map(o=>Number(o.value)).sort()) }; }
+        node = document.createElement("select"); node.innerHTML = `<option value=""></option>` + items.map(i => `<option value="${i.id}">${escapeHtml(i.label)}</option>`).join(""); node.value = rawValue ? String(rawValue) : ""; return { node, get: () => node.value ? Number(node.value) : 0, changed: () => String(rawValue||"") !== String(node.value||"") };
+      }
+      if (type === "Choice" || choiceOptions(meta).length) { const opts = choiceOptions(meta); node = document.createElement("select"); node.innerHTML = `<option value=""></option>` + opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join(""); if (!opts.includes(currentDisplay) && currentDisplay) node.innerHTML += `<option value="${escapeHtml(currentDisplay)}">${escapeHtml(currentDisplay)}</option>`; node.value = currentDisplay; return { node, get: () => node.value, changed: () => currentDisplay !== node.value }; }
+      if (type === "ChoiceList") { const opts = choiceOptions(meta); node = document.createElement("select"); node.multiple = true; node.size = Math.min(8, Math.max(4, opts.length)); node.innerHTML = opts.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join(""); const current = new Set(listValues(rawValue).map(asText)); [...node.options].forEach(o=>o.selected=current.has(o.value)); return { node, get: () => ["L", ...[...node.selectedOptions].map(o=>o.value)], changed: () => JSON.stringify([...current].sort()) !== JSON.stringify([...node.selectedOptions].map(o=>o.value).sort()) }; }
+      if (type === "Date" || type === "DateTime") { node = document.createElement("input"); node.type = "date"; node.value = dateToInput(rawValue); return { node, get: () => node.value, changed: () => dateToInput(rawValue) !== node.value }; }
+      const label = normalizeKey(meta?.label || colId); const longText = ["description","commentaire","commmentaire"].some(x => label.includes(x)); node = longText ? document.createElement("textarea") : document.createElement("input"); node.value = currentDisplay; return { node, get: () => node.value, changed: () => currentDisplay !== node.value };
+    }
+    function dateToInput(v) { if (!v) return ""; if (typeof v === "number") { const d = new Date(v * 1000); if (!isNaN(d)) return d.toISOString().slice(0,10); } const s = asText(v); const m = s.match(/(\d{4})-(\d{2})-(\d{2})/); if (m) return m[0]; const f = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (f) return `${f[3]}-${f[2].padStart(2,"0")}-${f[1].padStart(2,"0")}`; return ""; }
+
+    function openEditor(rowId) {
+      const table = runtime.apps; const row = table.rows.find(r => Number(r.id) === Number(rowId)); if (!row) return;
+      editSubject = { table, row }; editorControls = new Map();
+      $("editorTitle").textContent = display(table,row,"appName") || "Demande application";
+      $("editorSub").textContent = `${display(table,row,"service") || "Service non renseigné"} · Table ${table.id}, ligne ${row.id}`;
+      const fields = ["service","appName","priority","editor","playstore","paid","device","vector","private","version"];
+      const body = document.createElement("div"); body.className = "form-grid";
+      fields.forEach(key => { const colId = table.cols[key]; if (!colId) return; const meta = columnMeta(table,colId); const ctrl = createControl(colId, row[colId], meta); editorControls.set(colId, ctrl); const wrapper = document.createElement("div"); wrapper.className = "field " + (["comment","device","vector"].includes(key) ? "span-2" : ""); const lab = document.createElement("label"); lab.textContent = meta.label || colId; wrapper.appendChild(lab); wrapper.appendChild(ctrl.node); body.appendChild(wrapper); });
+      $("editorBody").innerHTML = ""; $("editorBody").appendChild(body); $("editorMeta").textContent = `Enregistrement direct dans ${table.id}.`;
+      $("editorBackdrop").classList.remove("hidden");
+    }
+    function closeEditor() { $("editorBackdrop").classList.add("hidden"); editSubject = null; editorControls = new Map(); }
+    async function saveEditor() {
+      if (!editSubject) return; const { table, row } = editSubject; const fields = {};
+      editorControls.forEach((ctrl,colId) => { if (ctrl.changed()) fields[colId] = ctrl.get(); });
+      if (!Object.keys(fields).length) { showToast("Aucune modification détectée"); return; }
+      await grist.docApi.applyUserActions([["UpdateRecord", table.id, Number(row.id), fields]]);
+      showToast("Demande mise à jour"); closeEditor(); await loadData();
+    }
+
+    function bindEvents() {
+      $("refreshBtn").addEventListener("click", () => loadData().catch(showError));
+      $("configBtn").addEventListener("click", () => openConfig($("configPanel").classList.contains("hidden")));
+      $("appFilterBtn").addEventListener("click", () => toggleAppPanel("filter"));
+      $("appSortBtn").addEventListener("click", () => toggleAppPanel("sort"));
+      $("closeConfigBtn").addEventListener("click", () => openConfig(false));
+      $("saveConfigBtn").addEventListener("click", saveConfig);
+      $("serviceFilter").addEventListener("change", e=>{ state.service=e.target.value; render(); });
+      $("workStatusFilter").addEventListener("change", e=>{ state.workStatus=e.target.value; render(); });
+      $("priorityFilter").addEventListener("change", e=>{ state.priority=e.target.value; render(); });
+      $("playstoreFilter").addEventListener("change", e=>{ state.playstore=e.target.value; render(); });
+      $("qualificationFilter").addEventListener("change", e=>{ state.qualification=e.target.value; render(); });
+      $("sortSelect").addEventListener("change", e=>{ state.sort=e.target.value; render(); });
+      $("resetFiltersBtn").addEventListener("click", () => {
+        state.service=""; state.workStatus=""; state.priority=""; state.playstore=""; state.qualification="";
+        selectedAppKey=""; selectedWorkKey="";
+        ["serviceFilter","workStatusFilter","priorityFilter","playstoreFilter","qualificationFilter"].forEach(id=>$(id).value="");
+        render();
+      });
+      $("closeEditorBtn").addEventListener("click", closeEditor);
+      $("editorBackdrop").addEventListener("click", e => { if (e.target.id === "editorBackdrop") closeEditor(); });
+      $("saveEditorBtn").addEventListener("click", () => saveEditor().catch(showError));
+    }
+    bindEvents();
+    setTimeout(() => loadData().catch(showError), 400);
+  })();
+  </script>
 </body>
 </html>
